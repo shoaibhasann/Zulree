@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+todo
+Hook these lists into your admin endpoint GET /admin/categories/sub?main= (easy server change).
 
-## Getting Started
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+High-level routes list (recommended)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Products
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+GET /admin/products — list (with filters/pagination)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+GET /admin/products/:id — get single product (includes minimal variant info or flag)
 
-## Learn More
+POST /admin/products — create product
 
-To learn more about Next.js, take a look at the following resources:
+PUT /admin/products/:id — update product
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+DELETE /admin/products/:id — delete product
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Variants (manual per-variant create/edit/delete)
 
-## Deploy on Vercel
+GET /admin/products/:productId/variants — list all variants for a product
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+GET /admin/variants/:variantId — get single variant
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+POST /admin/products/:productId/variants — create one variant (manual)
+
+PUT /admin/variants/:variantId — update variant (stock, price, images, selectedOptions)
+
+DELETE /admin/variants/:variantId — delete variant
+
+Small helpers
+
+POST /admin/products/:productId/variants/bulk — optional bulk create (if needed later)
+
+POST /admin/products/:productId/toggle-variants — set hasVariants true/false
+
+GET /admin/options?category=...&sub=... — return defaultOptionsByCategory (UI convenience)
+
+POST /admin/products/:productId/recompute-stock — force recomputeProductStock (admin tool)
+
+Public / storefront (read-only)
+
+GET /products — public listing (filters, facets)
+
+GET /products/:slug — product page (should include variants when hasVariants=true)
+
+GET /products/:productId/variants — variants for storefront (or include in product response
+
+
+
+// adminProducts.js (express router)
+router.post("/admin/products", createProduct);
+router.put("/admin/products/:id", updateProduct);
+router.get("/admin/products", listProducts);
+router.get("/admin/products/:id", getProduct);
+router.post("/admin/products/:id/toggle-variants", toggleVariants);
+router.post("/admin/products/:id/recompute-stock", recomputeStock);
+
+// adminVariants.js (express router)
+router.get("/admin/products/:productId/variants", listVariantsForProduct);
+router.post("/admin/products/:productId/variants", createVariant);
+router.put("/admin/variants/:variantId", updateVariant);
+router.delete("/admin/variants/:variantId", deleteVariant);
+router.post("/admin/products/:productId/variants/bulk", createVariantsBulk); // optional
+
+
+## API endpoint list
+
+# Auth
+- POST /auth/login -> request a new otp for login
+- POST /auth/verify-otp -> verify a otp
+- POST /auth/logout -> revoke session & clear cookie
+
+
+# Admin
+- POST /admin/products/create -> to create a new product
