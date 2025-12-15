@@ -10,7 +10,10 @@ const ImageUploader = ({ onUploadSuccess }) => {
         uploadPreset={process.env.NEXT_PUBLIC_UPLOAD_PRESET}
         onSuccess={(result) => {
           if (typeof result.info === "object" && "secure_url" in result.info) {
-            onUploadSuccess(result.info);
+            onUploadSuccess({
+              public_id: result.info.public_id,
+              secure_url: result.info.secure_url
+            });
           }
         }}
         options={{
