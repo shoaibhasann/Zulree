@@ -1,3 +1,15 @@
+export const MAIN_CATEGORIES = [
+  "Bangles",
+  "Bracelets",
+  "Necklaces",
+  "Korean Jewellery",
+  "Rings",
+  "Earrings",
+  "Hair Accessories",
+  "Boxes",
+  "Other",
+];
+
 export const OCCASION_OPTIONS = [
   "Daily Wear",
   "Office Wear",

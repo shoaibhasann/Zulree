@@ -1,48 +1,5 @@
+import { BASE_MATERIAL_OPTIONS, MAIN_CATEGORIES, OCCASION_OPTIONS } from "@/helpers/productSpecifications";
 import { z } from "zod";
-
-const MAIN_CATEGORIES = [
-  "Bangles",
-  "Bracelets",
-  "Necklaces",
-  "Korean Jewellery",
-  "Rings",
-  "Earrings",
-  "Hair Accessories",
-  "Boxes",
-  "Other",
-];
-
-const OCCASION_OPTIONS = [
-  "Daily Wear",
-  "Office Wear",
-  "Casual",
-  "Festive",
-  "Party Wear",
-  "Wedding",
-  "Engagement",
-  "Bridal",
-  "Gifting",
-  "Traditional",
-  "Ethnic",
-  "Modern",
-];
-
-const BASE_MATERIAL_OPTIONS = [
-  "Alloy",
-  "Brass",
-  "Copper",
-  "Silver",
-  "Sterling Silver 925",
-  "Gold",
-  "Gold Plated",
-  "Rose Gold Plated",
-  "Oxidized Silver",
-  "Kundan Base",
-  "Lac",
-  "Thread",
-  "Beads",
-  "Stainless Steel",
-];
 
 export const createProductSchema = z
   .object({

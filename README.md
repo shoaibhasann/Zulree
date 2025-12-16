@@ -74,6 +74,12 @@ router.post("/admin/products/:productId/variants/bulk", createVariantsBulk); // 
 
 
 # Admin
-- POST /admin/products/create -> to create a new product
+- POST /admin/products -> to create a new product
+- GET /admin/products -> to fetch products
+- GET /admin/products/[productId] -> to fetch variants of a product
+- PATCH /admin/products/[productId] -> to update a product
+- DELETE /admin/products/[productId] -> to delete a product
+- PATCH /admin/products/[productId]/[variantId] -> to update a variant
+- DELETE /admin/products/[productId]/[variantId] -> to delete a variant
 - POST /admin/products/[productId]/variant -> to add single variant of product
 - POST /admin/products/[productId]/variant/bulk -> to add variants of the product in bulk
