@@ -1,4 +1,5 @@
 import { getUserRole } from "@/helpers/getUserId";
+import { generateProductSKU } from "@/helpers/skuGenerator";
 import { dbConnect } from "@/lib/dbConnect";
 import { ProductModel } from "@/models/product.model";
 import { createProductSchema } from "@/schemas/createProductSchema";
@@ -60,8 +61,15 @@ export async function POST(request) {
       productData.hasStock = productData.availableStock > 0;
     }
 
+    const sku = generateProductSKU(productData.category);
 
-    const newProduct = await ProductModel.create(productData);
+
+    const newProduct = await ProductModel.create(
+      {
+        ...productData,
+        sku
+      }
+    );
 
     return NextResponse.json(
       {

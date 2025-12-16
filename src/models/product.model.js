@@ -31,12 +31,10 @@ const productSchema = new Schema(
       sub: { type: String, default: "", index: true },
     },
 
-    // ******** SPECIFIC PRODUCT OPTIONS ********
-    // used only for admin UI; variants come from this structure
-    options: [
+    variants: [
       {
-        name: { type: String, required: true },
-        values: [{ type: String }],
+        type: Schema.Types.ObjectId,
+        ref: "Variant",
       },
     ],
 
@@ -53,20 +51,14 @@ const productSchema = new Schema(
       max: 100,
     },
 
-    // ******** INVENTORY ********
-    // If product has NO variants → use this stock
     stock: { type: Number, default: 0, min: 0 },
 
-    // If variants exist → availableStock auto-calculated
     availableStock: { type: Number, default: 0, index: true },
     hasStock: { type: Boolean, default: false, index: true },
 
-    // IMPORTANT FLAG
     hasVariants: { type: Boolean, default: false, index: true },
 
-    // ******** SKU for single-SKU products ********
-    sku: { type: String, default: "" },
-
+    sku: { type: String, required: true, unique: true },
 
     images: [
       {
@@ -84,13 +76,10 @@ const productSchema = new Schema(
       isAuthentic: { type: Boolean, default: false },
       otherSpecs: [
         {
-          type: String
-        }
-      ]
+          type: String,
+        },
+      ],
     },
-
-
-    hsnCode: { type: String, default: "" },
 
     ratings: { type: Number, default: 0, max: 5 },
     numberOfReviews: { type: Number, default: 0 },
@@ -105,6 +94,14 @@ const productSchema = new Schema(
     toObject: { virtuals: true },
   }
 );
+
+productSchema.pre("save", function () {
+  if (this.sku && typeof this.sku === "string") {
+    this.sku = this.sku.trim().toLowerCase();
+  }
+});
+
+
 
 // ******** VIRTUALS ********
 productSchema.virtual("finalPrice").get(function () {

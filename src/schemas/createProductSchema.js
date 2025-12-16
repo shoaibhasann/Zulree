@@ -60,16 +60,6 @@ export const createProductSchema = z
       sub: z.string().optional().default(""),
     }),
 
-    options: z
-      .array(
-        z.object({
-          name: z.string().min(1),
-          values: z.array(z.string().min(1)).min(1),
-        })
-      )
-      .optional()
-      .default([]),
-
     price: z.number().min(0),
 
     discountPercent: z.number().min(0).max(100).optional().default(0),
@@ -77,12 +67,6 @@ export const createProductSchema = z
     stock: z.number().min(0).optional().default(0),
 
     hasVariants: z.boolean().optional().default(false),
-
-    sku: z
-      .string()
-      .regex(/^[a-zA-Z0-9-]*$/, "SKU must be alphanumeric with hyphens only")
-      .optional()
-      .default(""),
 
     images: z
       .array(
@@ -108,22 +92,6 @@ export const createProductSchema = z
       })
       .optional()
       .default({}),
-
-    hsnCode: z.string(),
-
+      
     isActive: z.boolean().optional().default(true),
-  })
-
-  // ✅ OBJECT-LEVEL CROSS FIELD VALIDATION
-  .refine(
-    (data) => {
-      if (!data.hasVariants && data.options.length > 0) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Options are not allowed for simple products",
-      path: ["options"],
-    }
-  );
+  });

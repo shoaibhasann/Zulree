@@ -75,3 +75,5 @@ router.post("/admin/products/:productId/variants/bulk", createVariantsBulk); // 
 
 # Admin
 - POST /admin/products/create -> to create a new product
+- POST /admin/products/[productId]/variant -> to add single variant of product
+- POST /admin/products/[productId]/variant/bulk -> to add variants of the product in bulk
