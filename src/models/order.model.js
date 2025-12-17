@@ -43,7 +43,7 @@ const orderItemSchema = new Schema(
     discount: { type: Number, default: 0 },
     tax: { type: Number, default: 0 },
   },
-  { _id: false }
+  { _id: true }
 );
 
 const statusHistorySchema = new Schema(
@@ -162,7 +162,7 @@ const shiprocketSchema = new Schema(
     syncAttempts: { type: Number, default: 0 },
     lastSyncAt: Date,
   },
-  { _id: false }
+  { _id: true }
 );
 
 const orderSchema = new Schema(

@@ -35,3 +35,22 @@ GET /products/:productId/variants — variants for storefront (or include in pro
 
 - GET /products -> to fetch products with searching, sorting etc.
 - GET /products/[slug] -> to fetch product details 
+- POST /cart/add -> to add items in cart
+- PATCH /cart/update -> to update cart usually quantity
+- DELETE /cart/delete -> to remove item from cart
+- POST /cart/merge -> to merge offline cart to Database
+
+
+
+app/
+ └─ admin/
+    ├─ layout.jsx
+    ├─ page.jsx               // dashboard home
+    ├─ products/
+    │   ├─ page.jsx           // list products
+    │   ├─ new/
+    │   │   └─ page.jsx       // create product
+    │   └─ [productId]/
+    │       ├─ page.jsx       // edit product
+    │       └─ variants/
+    │           └─ page.jsx   // manage variants
