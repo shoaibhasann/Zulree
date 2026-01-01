@@ -1,4 +1,4 @@
-const defaultSubcategoriesByCategory = {
+export const defaultSubcategoriesByCategory = {
   Bangles: [
     "Bridal Bangles",
     "Wedding Chura",

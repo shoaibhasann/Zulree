@@ -139,7 +139,7 @@ export async function POST(request) {
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (err) {
     console.error("POST /auth/login error: ", err);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },

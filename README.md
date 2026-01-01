@@ -149,3 +149,52 @@ When you come back, just say:
 “Nova → resume from Create Shipment (DB-driven)”
 
 I’ll pick up exactly from there, no repetition.
+
+
+app/
+├── admin/
+│   ├── layout.jsx
+│   ├── page.jsx                 # Dashboard home
+│   │
+│   ├── orders/
+│   │   ├── page.jsx             # Orders list
+│   │   ├── loading.jsx
+│   │   └── [orderId]/
+│   │       ├── page.jsx         # Order detail
+│   │       └── loading.jsx
+│   │
+│   ├── customers/
+│   │   └── page.jsx             # (future)
+│   │
+│   ├── products/
+│   │   └── page.jsx             # (future)
+│   │
+│   └── settings/
+│       └── page.jsx             # (pickup, shiprocket, etc)
+│
+├── components/
+│   └── admin/
+│       ├── layout/
+│       │   ├── Sidebar.jsx
+│       │   ├── Topbar.jsx
+│       │   └── AdminLayoutShell.jsx
+│       │
+│       ├── orders/
+│       │   ├── OrdersTable.jsx
+│       │   ├── OrderRow.jsx
+│       │   ├── OrderStatusBadge.jsx
+│       │   └── CreateShipmentButton.jsx
+│       │
+│       ├── common/
+│       │   ├── Button.jsx
+│       │   ├── Badge.jsx
+│       │   ├── Loader.jsx
+│       │   ├── EmptyState.jsx
+│       │   └── ConfirmModal.jsx
+│       │
+│       └── dashboard/
+│           ├── StatCard.jsx
+│           └── QuickActions.jsx
+│
+└── styles/
+    └── admin.css   # optional

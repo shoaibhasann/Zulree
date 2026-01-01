@@ -4,8 +4,13 @@ import { jwtVerify } from "jose";
 const SECRET = process.env.REFRESH_TOKEN_SECRET;
 const secretKey = new TextEncoder().encode(SECRET);
 
+
 export async function proxy(request) {
+
+  const { pathname } = request.nextUrl;
+
   const cookieToken = request.cookies.get("refreshToken")?.value ?? null;
+
 
   if (!cookieToken) {
     console.warn("middleware -> no refreshToken cookie, redirecting");
@@ -19,6 +24,21 @@ export async function proxy(request) {
 
   try {
     const { payload } = await jwtVerify(token, secretKey);
+    const role = payload.role;
+
+    // Login page acess
+    if(pathname === '/login'){
+      if(role === "Admin"){
+        return NextResponse.redirect(new URL("/admin", request.url));
+      } 
+
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // Admin route protection
+    if(pathname.startsWith("/admin") && role !== "Admin"){
+      return NextResponse.redirect(new URL("/", request.url));
+    }
 
     const headers = new Headers(request.headers);
 
@@ -39,13 +59,8 @@ export async function proxy(request) {
 
 export const config = {
   matcher: [
-    "/api/v1/admin/:path*",
-    "/api/v1/orders/:path*",
-    "/payments/:path*",
-    "/users/:path*",
-    "/cart/:path*",
-    "/cloudinary/:path*",
-    "/products/:path*",
-    "/variants/:path*",
+    "/api/v1/auth/me",
+    "/admin",
+    "/login"
   ],
 };

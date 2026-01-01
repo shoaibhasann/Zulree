@@ -104,12 +104,12 @@ export async function GET(request) {
   try {
 
     const role = await getUserRole(request);
-    if (role !== "Admin") {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    // if (role !== "Admin") {
+    //   return NextResponse.json(
+    //     { success: false, message: "Unauthorized" },
+    //     { status: 401 }
+    //   );
+    // }
 
 
     const { searchParams } = new URL(request.url);

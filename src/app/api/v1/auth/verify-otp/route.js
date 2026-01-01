@@ -115,7 +115,6 @@ export async function POST(request) {
     const body = {
       success: true,
       message: "OTP verified successfully",
-      id: String(user._id),
     };
 
     return NextResponse.json(body, { status: 200 });

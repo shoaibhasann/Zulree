@@ -1,4 +1,45 @@
+import { isValidObjectId } from "@/helpers/isValidObject";
+import { dbConnect } from "@/lib/dbConnect";
+import { ProductModel } from "@/models/product.model";
 import { updateProductSchema } from "@/schemas/updateProductSchema";
+import { NextResponse } from "next/server";
+
+
+export async function GET(request, { params }){
+  await dbConnect();
+
+  try {
+    const { productId } = await params;
+
+    if(!isValidObjectId(productId)){
+      return NextResponse.json({
+        success: false,
+        message: "Product ID is invalid"
+      }, { status: 400 });
+    }
+
+    const product = await ProductModel.findById(productId);
+
+    if(!product){
+      return NextResponse.json({
+        success: false,
+        message: "Product not found"
+      }, { status: 400});
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Product fetched successfully",
+      data: product
+    })
+  } catch (error) {
+    console.error("GET /admin/products/[productId] ERROR:", err);
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PATCH(request, { params }) {
   await dbConnect();
