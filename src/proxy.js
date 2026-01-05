@@ -60,7 +60,7 @@ export async function proxy(request) {
 export const config = {
   matcher: [
     "/api/v1/auth/me",
+    "/api/v1/admin/:path*",
     "/admin",
-    "/login"
   ],
 };

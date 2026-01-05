@@ -10,6 +10,10 @@ export const sizeItemSchema = z.object({
     .int("Stock must be integer")
     .nonnegative()
     .min(0, "Stock cannot be negative"),
+  sku: z
+    .string({ required_error: "SKU is required" })
+    .min(1, "SKU cannot be empty")
+    .transform((v) => v.trim().toLowerCase()),
   isActive: z.boolean().optional().default(true),
 });
 
@@ -24,8 +28,8 @@ export const singleVariantSchema = z.object({
         public_id: z.string({ required_error: "public_id required" }),
         secure_url: z.string({ required_error: "secure_url required" }),
       })
-    )
-    .min(1, "At least one image is required"),
+    ).optional()
+   ,
   sizes: z
     .array(sizeItemSchema)
     .min(1, "At least one size is required")

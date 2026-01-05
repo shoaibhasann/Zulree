@@ -10,8 +10,9 @@ import {
   deleteCloudinaryImages,
   getRemovedImages,
 } from "@/helpers/deleteCloudinaryImages";
+import mongoose from "mongoose";
 
-export async function PATCH(request, { params }) {
+export async function GET(request, { params }) {
   await dbConnect();
 
   try {
@@ -23,31 +24,78 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const { productId, variantId } = params;
+    const { productId, variantId } = await params;
 
     if (!isValidObjectId(productId) || !isValidObjectId(variantId)) {
       return NextResponse.json(
-        { success: false, message: "Invalid Product or Variant ID" },
+        { success: false, message: "Invalid product or variant ID" },
         { status: 400 }
       );
     }
 
-    const product =
-      await ProductModel.findById(productId).select("_id hasVariants");
+    const variant = await VariantModel.findOne({
+      _id: variantId,
+      productId,
+    })
+      .select("color isActive images sizes")
+      .lean();
 
-    if (!product) {
+    if (!variant) {
       return NextResponse.json(
-        { success: false, message: "Product not found" },
+        { success: false, message: "Variant not found" },
         { status: 404 }
       );
     }
 
-    if (!product.hasVariants) {
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Variant fetched successfully",
+        data: variant,
+      },
+      { status: 200 }
+    );
+  } catch (err) {
+    console.error(
+      "GET /admin/products/[productId]/variants/[variantId] ERROR:",
+      err
+    );
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request, { params }) {
+  await dbConnect();
+
+  try {
+
+    const role = await getUserRole(request);
+    if (role !== "Admin") {
       return NextResponse.json(
-        {
-          success: false,
-          message: "This product is not configured for variants",
-        },
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { productId, variantId } = await params;
+
+    if (!isValidObjectId(productId) || !isValidObjectId(variantId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid product or variant ID" },
+        { status: 400 }
+      );
+    }
+
+    const product = await ProductModel.findById(productId).select(
+      "_id hasVariants images"
+    );
+
+    if (!product || !product.hasVariants) {
+      return NextResponse.json(
+        { success: false, message: "Invalid variant product" },
         { status: 400 }
       );
     }
@@ -59,16 +107,15 @@ export async function PATCH(request, { params }) {
 
     if (!variant) {
       return NextResponse.json(
-        { success: false, message: "Variant not found for this product" },
+        { success: false, message: "Variant not found" },
         { status: 404 }
       );
     }
 
     const body = await request.json().catch(() => ({}));
-
     if (!body || Object.keys(body).length === 0) {
       return NextResponse.json(
-        { success: false, message: "No data provided to update" },
+        { success: false, message: "No data provided" },
         { status: 400 }
       );
     }
@@ -82,29 +129,67 @@ export async function PATCH(request, { params }) {
     }
 
     if (Array.isArray(body.sizes)) {
-      for (const incomingSize of body.sizes) {
-        const existingSize = variant.sizes.id(incomingSize._id);
-        if (!existingSize) continue;
+      for (const s of body.sizes) {
+        if (s._id) {
+          const existing = variant.sizes.id(s._id);
+          if (!existing) continue;
 
-        if (typeof incomingSize.stock === "number") {
-          existingSize.stock = incomingSize.stock;
-        }
+          if (typeof s.size === "string") {
+            existing.size = s.size.trim();
+          }
 
-        if (typeof incomingSize.isActive === "boolean") {
-          existingSize.isActive = incomingSize.isActive;
+          if (typeof s.stock === "number" && s.stock >= 0) {
+            existing.stock = s.stock;
+          }
+
+          if (typeof s.sku === "string") {
+            existing.sku = s.sku.trim().toLowerCase();
+          }
+
+          if (typeof s.isActive === "boolean") {
+            existing.isActive = s.isActive;
+          }
+        } else {
+
+          if (typeof s.size === "string" && typeof s.sku === "string") {
+            variant.sizes.push({
+              size: s.size.trim(),
+              stock: Number(s.stock) >= 0 ? Number(s.stock) : 0,
+              sku: s.sku.trim().toLowerCase(),
+              isActive: typeof s.isActive === "boolean" ? s.isActive : true,
+            });
+          }
         }
       }
     }
 
+    if (Array.isArray(body.deletedSizeIds)) {
+      variant.sizes = variant.sizes.filter(
+        (s) => !body.deletedSizeIds.includes(String(s._id))
+      );
+    }
+
     let imagesToDelete = [];
 
-    if (Array.isArray(body.images)) {
-      const oldImages = variant.images || [];
-      const newImages = body.images;
+    if (Array.isArray(body.newImages) && body.newImages.length > 0) {
+      const variants = await VariantModel.find({ productId }).sort({
+        createdAt: 1,
+      });
 
-      imagesToDelete = getRemovedImages(oldImages, newImages);
+      const variantIndex = variants.findIndex(
+        (v) => v._id.toString() === variantId
+      );
 
-      variant.images = newImages;
+      const isFirstVariant = variantIndex === 0;
+
+      imagesToDelete = [...variant.images];
+
+      variant.images = body.newImages;
+
+      if (isFirstVariant) {
+        product.images = body.newImages;
+        await product.save();
+      }
     }
 
     await variant.save();
@@ -112,19 +197,18 @@ export async function PATCH(request, { params }) {
     await recomputeProductStock(productId);
 
     if (imagesToDelete.length > 0) {
-      await deleteCloudinaryImages(imagesToDelete);
+      deleteCloudinaryImages(
+        imagesToDelete.map((img) => img?.public_id).filter(Boolean)
+      );
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Variant updated successfully",
-        variant,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Variant updated successfully",
+      variant,
+    });
   } catch (err) {
-    console.error("PATCH /admin/products/[productId]/[variantId]", err);
+    console.error("PATCH VARIANT ERROR:", err);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }
@@ -132,86 +216,88 @@ export async function PATCH(request, { params }) {
   }
 }
 
+
 export async function DELETE(request, { params }) {
   await dbConnect();
+  const session = await mongoose.startSession();
 
   try {
-    
     const role = await getUserRole(request);
     if (role !== "Admin") {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
+      throw new Error("UNAUTHORIZED");
     }
 
-    
     const { productId, variantId } = await params;
-
     if (!isValidObjectId(productId) || !isValidObjectId(variantId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid Product or Variant ID" },
-        { status: 400 }
-      );
+      throw new Error("INVALID_ID");
     }
 
-    
-    const product =
-      await ProductModel.findById(productId).select("_id hasVariants");
-    if (!product) {
-      return NextResponse.json(
-        { success: false, message: "Product not found" },
-        { status: 404 }
-      );
+    session.startTransaction();
+
+    const product = await ProductModel.findById(productId).session(session);
+    if (!product || !product.hasVariants) {
+      throw new Error("INVALID_PRODUCT");
     }
 
-    if (!product.hasVariants) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "This product is not configured for variants",
-        },
-        { status: 400 }
-      );
+    const variants = await VariantModel.find({ productId })
+      .sort({ createdAt: 1 })
+      .session(session);
+
+    const variantIndex = variants.findIndex(
+      (v) => v._id.toString() === variantId
+    );
+
+    if (variantIndex === -1) {
+      throw new Error("VARIANT_NOT_FOUND");
     }
 
+    const variantToDelete = variants[variantIndex];
 
-    const variant = await VariantModel.findOne({
-      _id: variantId,
-      productId,
+    const imagePublicIds = [];
+    variantToDelete.images?.forEach((img) => {
+      if (img?.public_id) imagePublicIds.push(img.public_id);
     });
 
-    if (!variant) {
-      return NextResponse.json(
-        { success: false, message: "Variant not found for this product" },
-        { status: 404 }
-      );
+    if (variants.length === 1) {
+      product.images?.forEach((img) => {
+        if (img?.public_id) imagePublicIds.push(img.public_id);
+      });
+
+      await VariantModel.deleteOne({ _id: variantId }).session(session);
+      await ProductModel.deleteOne({ _id: productId }).session(session);
+    } else {
+      if (variantIndex === 0) {
+        product.images = variants[1].images;
+        await product.save({ session });
+      }
+
+      await VariantModel.deleteOne({ _id: variantId }).session(session);
+      await recomputeProductStock(productId, {session});
     }
 
-    const imagePublicIds = (variant.images || []).map((img) => img.public_id);
+    await session.commitTransaction();
 
+    deleteCloudinaryImages(imagePublicIds);
 
-    await VariantModel.deleteOne({ _id: variantId });
-
-    await recomputeProductStock(productId);
-
-    
-    if (imagePublicIds.length > 0) {
-      await deleteCloudinaryImages(imagePublicIds);
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Variant and its images deleted successfully",
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      success: true,
+      message:
+        variants.length === 1
+          ? "Last variant deleted, product removed"
+          : "Variant deleted successfully",
+    });
   } catch (err) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+
     console.error("DELETE VARIANT ERROR:", err);
+
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }
     );
+  } finally {
+    session.endSession();
   }
 }

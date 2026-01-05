@@ -44,25 +44,25 @@ export default function OrdersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Orders</h1>
+        <h1 className="text-xl text-white font-semibold">Orders</h1>
       </div>
 
       <div className="rounded-md border border-slate-800">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+              <TableHead className="text-muted-foreground">Order</TableHead>
+              <TableHead className="text-muted-foreground">Customer</TableHead>
+              <TableHead className="text-muted-foreground">Status</TableHead>
+              <TableHead className="text-muted-foreground">Amount</TableHead>
+              <TableHead className="text-muted-foreground">Date</TableHead>
+              <TableHead className="text-right text-muted-foreground">Action</TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
             {orders.map((o) => (
-              <TableRow key={o.id}>
+              <TableRow className="text-white" key={o.id}>
                 <TableCell className="font-medium">{o.id}</TableCell>
                 <TableCell>{o.customer}</TableCell>
                 <TableCell>
@@ -72,7 +72,7 @@ export default function OrdersPage() {
                 <TableCell>{o.createdAt}</TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/orders/${o.id}`}>
-                    <Button size="sm" variant="outline">
+                    <Button className="text-black" size="sm" variant="outline">
                       View
                     </Button>
                   </Link>

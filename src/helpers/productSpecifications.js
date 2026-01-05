@@ -30,6 +30,8 @@ export const BASE_MATERIAL_OPTIONS = [
   "Alloy",
   "Brass",
   "Copper",
+  "Glass",
+  "Borosil",
   "Silver",
   "Sterling Silver 925",
   "Gold",

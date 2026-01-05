@@ -123,7 +123,7 @@ const userSchema = new Schema(
 
     role: { type: String, enum: ["User", "Admin"], default: "User" },
 
-    isBanned: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false },
 
     isDeleted: { type: Boolean, default: false },
 

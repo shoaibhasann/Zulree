@@ -1,4 +1,4 @@
-import { getUserRole } from "@/helpers/getUserId";
+import { getUserId, getUserRole } from "@/helpers/getUserId";
 import { generateProductSKU } from "@/helpers/skuGenerator";
 import { dbConnect } from "@/lib/dbConnect";
 import { ProductModel } from "@/models/product.model";
@@ -10,6 +10,8 @@ export async function POST(request) {
 
   try {
     const role = await getUserRole(request);
+    const userId = await getUserId(request);
+
     if (role !== "Admin") {
       return NextResponse.json(
         {
@@ -63,8 +65,10 @@ export async function POST(request) {
 
     const newProduct = await ProductModel.create({
       ...productData,
+      images: [...productData.images],
       sku,
     });
+
 
     return NextResponse.json(
       {
@@ -104,13 +108,13 @@ export async function GET(request) {
   try {
 
     const role = await getUserRole(request);
-    // if (role !== "Admin") {
-    //   return NextResponse.json(
-    //     { success: false, message: "Unauthorized" },
-    //     { status: 401 }
-    //   );
-    // }
 
+    if (role !== "Admin") {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
 
@@ -122,7 +126,7 @@ export async function GET(request) {
     const category = searchParams.get("category"); // category.main
     const isActive = searchParams.get("isActive");
 
-    /* -------- FILTER BUILD -------- */
+    
     const filter = {};
 
     if (search) {
@@ -140,11 +144,11 @@ export async function GET(request) {
       filter.isActive = isActive === "true";
     }
 
-    /* -------- QUERY -------- */
+   
     const [products, total] = await Promise.all([
       ProductModel.find(filter)
         .select(
-          "title slug price discountPercent stock hasVariants images category isActive createdAt"
+          "title slug price discountPercent stock hasVariants images category isActive availableStock createdAt"
         )
         .sort({ createdAt: -1 })
         .skip(skip)

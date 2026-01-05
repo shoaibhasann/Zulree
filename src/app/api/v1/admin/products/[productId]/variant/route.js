@@ -11,6 +11,7 @@ export async function POST(request, { params }) {
   await dbConnect();
 
   try {
+    
     const role = await getUserRole(request);
     if (role !== "Admin") {
       return NextResponse.json(
@@ -20,7 +21,6 @@ export async function POST(request, { params }) {
     }
 
     const { productId } = await params;
-    
 
     if (!isValidObjectId(productId)) {
       return NextResponse.json(
@@ -29,8 +29,9 @@ export async function POST(request, { params }) {
       );
     }
 
+    
     const product = await ProductModel.findById(productId).select(
-      "_id images hasVariants"
+      "_id images stock hasVariants"
     );
 
     if (!product) {
@@ -49,6 +50,7 @@ export async function POST(request, { params }) {
         { status: 400 }
       );
     }
+
 
     const raw = await request.json().catch(() => ({}));
     const parsed = singleVariantSchema.safeParse(raw);
@@ -69,22 +71,22 @@ export async function POST(request, { params }) {
       ? variantPayload.sizes
       : [];
 
-        for (const s of sizes) {
-          if (typeof s.sku !== "string" || !s.sku.trim()) {
-            return NextResponse.json(
-              {
-                success: false,
-                message: "Every size must have a valid SKU",
-              },
-              { status: 400 }
-            );
-          }
-        }
+    
+    for (const s of sizes) {
+      if (typeof s.sku !== "string" || !s.sku.trim()) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Every size must have a valid SKU",
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     const payloadSkus = sizes
-      .map((s) => s.sku)
-      .filter(Boolean)
-      .map((sku) => sku.trim().toLowerCase());
+      .map((s) => s.sku.trim().toLowerCase())
+      .filter(Boolean);
 
     if (payloadSkus.length === 0) {
       return NextResponse.json(
@@ -104,19 +106,22 @@ export async function POST(request, { params }) {
       );
     }
 
+    
+    const variantCount = await VariantModel.countDocuments({ productId });
+    const isFirstVariant = variantCount === 0;
+
+    if(isFirstVariant){
+      product.stock = variantPayload.sizes[0].stock;
+      await product.save();
+    }
+
 
     const newVariant = await VariantModel.create({
       productId,
       ...variantPayload,
+      images: isFirstVariant ? product.images : variantPayload.images
     });
 
-    if (
-      (!product.images || product.images.length === 0) &&
-      newVariant.images?.length > 0
-    ) {
-      product.images = [newVariant.images[0]];
-      await product.save();
-    }
 
     await recomputeProductStock(productId);
 
@@ -125,6 +130,7 @@ export async function POST(request, { params }) {
         success: true,
         message: "Variant added successfully",
         variant: newVariant,
+        isFirstVariant,
       },
       { status: 201 }
     );
@@ -136,6 +142,3 @@ export async function POST(request, { params }) {
     );
   }
 }
-
-
-

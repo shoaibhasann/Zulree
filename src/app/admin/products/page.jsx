@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,33 +17,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Plus } from "lucide-react";
-import { ProductsSkeleton } from "../components/products-skeleton";
+import { ProductsSkeleton } from "../components/admin/skeleton/ProductsSkeleton";
 import { useRouter } from "next/navigation";
+import StockBadge from "../components/admin/StockBadge";
+import api from "@/app/lib/api";
+import toast from "react-hot-toast";
+import { useProductActions } from "../hooks/useProductActions";
 
-function StockBadge({ stock }) {
-  if (stock === 0) return <Badge variant="destructive">Out of stock</Badge>;
-  if (stock < 10) return <Badge variant="secondary">Low stock</Badge>;
-  return <Badge variant="default">In stock</Badge>;
-}
+
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const { deleteProduct } = useProductActions();
+
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch("/api/v1/admin/products", {
-          credentials: "include",
-        });
-        const json = await res.json();
 
-        if (json.success) {
-          setProducts(json.data || []);
+        const response = await api.get("/api/v1/admin/products");
+        const result = response.data;
+
+        if (result?.success) {
+          setProducts(result.data || []);
         }
       } catch (err) {
-        console.error("Failed to fetch products", err);
+        toast.error(err?.response?.data?.message || "Failed to fetch products");
       } finally {
         setLoading(false);
       }
@@ -60,10 +60,10 @@ export default function ProductsPage() {
   if (!products.length) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-muted-foreground">
-        <p className="text-sm">No products found</p>
+        <p className="text-base text-admin-muted">No products found</p>
         <Button
           onClick={() => router.push("/admin/products/create")}
-          className="mt-4"
+          className="mt-4 bg-admin-primary text-white"
         >
           Add your first product
         </Button>
@@ -75,7 +75,7 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between text-white">
         <h1 className="text-xl font-semibold">Products</h1>
 
         <Button onClick={() => router.push("/admin/products/create")}>
@@ -85,56 +85,105 @@ export default function ProductsPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border border-slate-800">
+      {/* Table */}
+      <div className="rounded-lg bg-admin-foreground border border-admin-border overflow-hidden">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+          {/* HEADER */}
+          <TableHeader
+            className="bg-admin-foreground
+            hover:bg-[#151a34]"
+          >
+            <TableRow className="bg-admin-bg hover:bg-[#151a34]">
+              <TableHead className="text-admin-muted font-medium">
+                Product
+              </TableHead>
+              <TableHead className="text-admin-muted font-medium">
+                Category
+              </TableHead>
+              <TableHead className="text-admin-muted font-medium">
+                Price
+              </TableHead>
+              <TableHead className="text-admin-muted font-medium">
+                Stock
+              </TableHead>
+              <TableHead className="text-admin-muted font-medium">
+                Status
+              </TableHead>
+              <TableHead className="text-right text-admin-muted font-medium">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
 
+          {/* BODY */}
           <TableBody>
             {products.map((p) => (
-              <TableRow key={p._id}>
-                <TableCell className="font-medium">{p.title}</TableCell>
+              <TableRow
+                key={p._id}
+                onClick={() => router.push(`/admin/products/${p._id}`)}
+                className="
+            bg-admin-foreground
+            hover:bg-[#151a34]
+            transition-colors
+            cursor-pointer
+            border-b border-admin-border
+            last:border-b-0
+          "
+              >
+                <TableCell className="font-medium text-white">
+                  {p.title}
+                </TableCell>
 
-                <TableCell>{p.category?.main || "-"}</TableCell>
+                <TableCell className="text-white">
+                  {p.category?.main || "-"}
+                </TableCell>
 
-                <TableCell>₹{p.price}</TableCell>
+                <TableCell className="text-white">₹{p.price}</TableCell>
 
-                <TableCell>{p.stock}</TableCell>
+                <TableCell className="text-white">
+                  {p.stock === 0 ? p.availableStock : p.stock}
+                </TableCell>
 
                 <TableCell>
-                  <StockBadge stock={p.stock} />
+                  <StockBadge
+                    stock={p.stock === 0 ? p.availableStock : p.stock}
+                  />
                 </TableCell>
 
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-admin-card"
+                      >
+                        <MoreHorizontal className="h-4 w-4 text-admin-muted" />
                       </Button>
                     </DropdownMenuTrigger>
 
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-admin-card p-0 border border-slate-400"
+                    >
+                      <DropdownMenuItem className="text-slate-50 hover:bg-admin-primary"
                         onClick={() => router.push(`/admin/products/${p._id}`)}
                       >
                         View
                       </DropdownMenuItem>
-                      <DropdownMenuItem
+
+                      <DropdownMenuItem className="text-slate-50 hover:bg-admin-primary"
                         onClick={() =>
                           router.push(`/admin/products/${p._id}/edit`)
                         }
                       >
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-500">
+
+                      <DropdownMenuItem
+                        onClick={() => deleteProduct(p._id)}
+                        className="text-admin-danger hover:bg-admin-danger hover:text-slate-50"
+                      >
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>

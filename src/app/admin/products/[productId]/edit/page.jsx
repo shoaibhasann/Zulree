@@ -3,93 +3,109 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+import api from "@/app/lib/api";
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import ImageWrapper from "@/app/admin/components/admin/ImageWrapper";
+import Image from "next/image";
+import ImageUploader from "@/app/admin/components/admin/ImageUploader";
+import toast from "react-hot-toast";
 
 export default function EditProductPage() {
+
   const { productId } = useParams();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [product, setProduct] = useState(null);
+  const [images, setImages] = useState([]);
+  const [newImages, setNewImages] = useState([]);
+
 
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: "",
     stock: "",
-    discountPercent: "",
+    discountPercent: 0,
     isActive: true,
   });
 
-  // 🔹 Fetch existing product
+  // 🔹 Fetch existing product (AXIOS)
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const res = await fetch(`/api/v1/admin/products/${productId}`);
-        const text = await res.text();
-        if (!text) throw new Error("Empty response");
-        const json = JSON.parse(text);
+        const { data } = await api.get(`/api/v1/admin/products/${productId}`);
 
-        if (json.success) {
-          const p = json.data;
+        if (data.success) {
+          const p = data.data;
           setProduct(p);
+          setImages(p.images);
           setForm({
             title: p.title || "",
             description: p.description || "",
-            price: p.price || "",
-            stock: p.stock || "",
-            discountPercent: p.discountPercent || 0,
+            price: p.price ?? "",
+            stock: p.stock ?? "",
+            discountPercent: p.discountPercent ?? 0,
             isActive: p.isActive ?? true,
           });
         }
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error("Fetch product error:", err);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchProduct();
+    if (productId) fetchProduct();
   }, [productId]);
 
+  // 🔹 Handle input change
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   }
 
-  // 🔹 Submit update
+const handleImageUpload = (image) => {
+  setNewImages((prev) => [...prev, image]);
+};
+
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
+    const toastId = toast.loading("Making changes...");
 
     try {
-      const res = await fetch(`/api/v1/admin/products/${productId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+      const { data } = await api.patch(`/api/v1/admin/products/${productId}`, {
+        ...form,
+        price: Number(form.price),
+        stock: Number(form.stock),
+        discountPercent: Number(form.discountPercent),
+        images: images,
+        newImages: newImages
       });
 
-      const json = await res.json();
-
-      if (json.success) {
+      if (data.success) {
+        toast.success("Changes updated successfully", { id: toastId });
         router.push(`/admin/products/${productId}`);
-      } else {
-        alert(json.message || "Update failed");
       }
-    } catch (e) {
-      console.error(e);
-      alert("Something went wrong");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Something went wrong", { id: toastId });
     } finally {
       setSaving(false);
     }
   }
 
-  // 🔹 Skeleton
+
   if (loading) {
     return (
       <div className="space-y-4 max-w-2xl">
@@ -102,16 +118,48 @@ export default function EditProductPage() {
   }
 
   if (!product) {
-    return <p className="text-muted-foreground">Product not found</p>;
+    return <p className="text-admin-muted">Product not found</p>;
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-2xl space-y-6 text-white">
       <h1 className="text-xl font-semibold">Edit Product</h1>
+
+      <div className="flex flex-wrap gap-3">
+        {images &&
+          images.map((img, index) => (
+            <ImageWrapper key={img.public_id} className="w-40 h-40">
+              <Image
+                key={img.public_id}
+                src={img.secure_url}
+                alt="Variant image"
+                fill
+                className="object-cover"
+              />
+            </ImageWrapper>
+          ))}
+      </div>
+
+      <ImageUploader onUploadSuccess={handleImageUpload} />
+
+      <div className="flex flex-wrap gap-3">
+        {newImages &&
+          newImages.map((img, index) => (
+            <ImageWrapper key={img.public_id} className="w-40 h-40">
+              <Image
+                key={img.public_id}
+                src={img.secure_url}
+                alt="Variant image"
+                fill
+                className="object-cover"
+              />
+            </ImageWrapper>
+          ))}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label>Title</Label>
+          <Label className="mb-2">Title</Label>
           <Input
             name="title"
             value={form.title}
@@ -121,7 +169,7 @@ export default function EditProductPage() {
         </div>
 
         <div>
-          <Label>Description</Label>
+          <Label className="mb-2">Description</Label>
           <Textarea
             name="description"
             value={form.description}
@@ -133,7 +181,7 @@ export default function EditProductPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Price (₹)</Label>
+            <Label className="mb-2">Price (₹)</Label>
             <Input
               name="price"
               type="number"
@@ -144,7 +192,7 @@ export default function EditProductPage() {
           </div>
 
           <div>
-            <Label>Stock</Label>
+            <Label className="mb-2">Stock</Label>
             <Input
               name="stock"
               type="number"
@@ -156,7 +204,7 @@ export default function EditProductPage() {
         </div>
 
         <div>
-          <Label>Discount (%)</Label>
+          <Label className="mb-2">Discount (%)</Label>
           <Input
             name="discountPercent"
             type="number"
@@ -170,7 +218,12 @@ export default function EditProductPage() {
             {saving ? "Saving..." : "Update Product"}
           </Button>
 
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          <Button
+            className="text-black"
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+          >
             Cancel
           </Button>
         </div>

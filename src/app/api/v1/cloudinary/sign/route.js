@@ -1,10 +1,12 @@
-import { getUserRole } from "@/helpers/getUserId";
-import { v2 as cloudinary } from "cloudinary";
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
+import { v2 as cloudinary } from "cloudinary";
+
 
 cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
@@ -12,55 +14,56 @@ cloudinary.config({
 export async function POST(request) {
   try {
 
-    const role = await getUserRole(request);
-
-    if(role !== "Admin"){
-        return NextResponse.json({
-            success: false,
-            message: "Unauthorized"
-        }, { status: 401 });
-    }
-
     const body = await request.json();
 
-    const { mainCategory, subCategory } = body;
-
-    const slugify = (str) => str?.toLowerCase().replace(/\s+/g, "-");
-
-    const folder = subCategory
-      ? `/products/${slugify(mainCategory)}/${slugify(subCategory)}`
-      : `/products/${slugify(mainCategory)}`;
-
-    const timestamp = Math.round(Date.now() / 1000);
-
-    const paramsToSign = {
-      timestamp,
-      folder,
-      allowed_formats: ["jpg", "jpeg", "png", "webp"],
-      min_image_width: 800,
-      min_image_height: 800,
-    };
+    const { paramsToSign } = body;
 
     const signature = cloudinary.utils.api_sign_request(
       paramsToSign,
       process.env.CLOUDINARY_API_SECRET
     );
 
-    return NextResponse.json(
-      {
-        signature,
-        timestamp,
-        folder
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      signature
+    });
+
   } catch (err) {
-    console.error("sign error: ", err);
+    console.error("Cloudinary sign error:", err);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Internal server error",
-      },
+      { success: false, message: "Signing failed" },
+      { status: 500 }
+    );
+  }
+}
+
+
+export async function DELETE(request) {
+  try {
+   
+
+    const { public_id } = await request.json();
+
+    const result = await cloudinary.api.delete_resources([public_id], {
+      resource_type: "image",
+      type: "upload",
+    });
+
+
+    if (result.result !== "ok") {
+      return NextResponse.json(
+        { success: false, message: "Cloudinary deletion failed", result },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Image deleted successfully",
+    });
+  } catch (error) {
+    console.error("DELETE /cloudinary/sign Error:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal Server Error" },
       { status: 500 }
     );
   }

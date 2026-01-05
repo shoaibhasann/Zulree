@@ -25,8 +25,9 @@ import {
 import { createProductSchema } from "@/schemas/createProductSchema";
 import { defaultSubcategoriesByCategory } from "@/helpers/subCategoryOptions";
 import Image from "next/image";
-import ImageUploader from "../../components/ImageUploader";
-
+import ImageUploader from "../../components/admin/ImageUploader";
+import api from "@/app/lib/api";
+import toast from "react-hot-toast";
 
 export default function CreateProductPage() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function CreateProductPage() {
     register,
     handleSubmit,
     setValue,
+    getValues,
     watch,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -59,33 +61,38 @@ export default function CreateProductPage() {
   const mainCategory = watch("category.main");
   const images = watch("images") || [];
 
-
   const subCategories = defaultSubcategoriesByCategory[mainCategory] || [];
 
-  async function onSubmit(values) {
-    const res = await fetch("/api/v1/admin/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
+  const onSubmit = async (values) => {
+    const toastId = toast.loading("Creating...");
+    try {
+      const { data } = await api.post("/api/v1/admin/products", values);
 
-    const json = await res.json();
-    if (json.success) {
-      router.push("/admin/products");
-    } else {
-      alert(json.message || "Failed to create product");
+      if (data.success) {
+        toast.success("Product created successfully", { id: toastId });
+        const hasVariantsFlag = getValues("hasVariants"); 
+        if(hasVariantsFlag){
+          router.replace(`/admin/products/${data?.product?._id}/variants/add`);
+        } else {
+          router.replace("/admin/products");
+        }
+        
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Something went wrong", { id: toastId });
     }
-  }
+  };
 
   const handleImageUpload = (image) => {
-    setValue("images", [...images, image], {
+    const currentImages = getValues("images") || [];
+
+    setValue("images", [...currentImages, image], {
       shouldValidate: true,
     });
   };
 
-
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-6 text-slate-50">
       <h1 className="text-xl font-semibold">Create Product</h1>
 
       {/* IMAGES */}
@@ -103,9 +110,11 @@ export default function CreateProductPage() {
                 className="relative border rounded-md overflow-hidden"
               >
                 <Image
+                  width={400}
+                  height={400}
                   src={img.secure_url}
                   alt="product"
-                  className="h-24 w-full object-cover"
+                  className="object-cover"
                 />
 
                 {/* Remove image */}
@@ -339,7 +348,7 @@ export default function CreateProductPage() {
             {isSubmitting ? "Creating..." : "Create Product"}
           </Button>
 
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          <Button className="text-black" type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
         </div>

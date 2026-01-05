@@ -8,16 +8,16 @@ const ImageUploader = ({ onUploadSuccess }) => {
       <CldUploadWidget
         signatureEndpoint="/api/v1/cloudinary/sign"
         uploadPreset={process.env.NEXT_PUBLIC_UPLOAD_PRESET}
+        options={{
+          folder: "zulree_products",
+        }}
         onSuccess={(result) => {
           if (typeof result.info === "object" && "secure_url" in result.info) {
             onUploadSuccess({
               public_id: result.info.public_id,
-              secure_url: result.info.secure_url
+              secure_url: result.info.secure_url,
             });
           }
-        }}
-        options={{
-          singleUploadAutoClose: true,
         }}
       >
         {({ open }) => {

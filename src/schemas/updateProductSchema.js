@@ -39,6 +39,15 @@ export const updateProductSchema = z
       )
       .optional(),
 
+    newImages: z
+      .array(
+        z.object({
+          public_id: z.string(),
+          secure_url: z.string(),
+        })
+      )
+      .optional(),
+
     coreSpecs: z
       .object({
         stoneType: z.string().optional(),

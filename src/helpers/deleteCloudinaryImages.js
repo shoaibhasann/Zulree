@@ -10,7 +10,6 @@ export async function deleteCloudinaryImages(publicIds = []) {
     });
   } catch (err) {
     console.error("Cloudinary delete error:", err);
-    // ❌ API fail mat karo
   }
 }
 
