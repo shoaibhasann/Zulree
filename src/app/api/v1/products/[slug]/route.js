@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
   await dbConnect();
 
   try {
-    const { slug } = params;
+    const { slug } = await params;
 
     const product = await ProductModel.findOne({
       slug,
@@ -20,6 +20,13 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
+
+    const discount = product.discountPercent || 0;
+    const price = product.price || 0;
+
+    product.finalPrice =
+      discount > 0 ? Math.round(price - (price * discount) / 100) : price;
+
 
     let variants = [];
 
@@ -35,8 +42,10 @@ export async function GET(request, { params }) {
     return NextResponse.json(
       {
         success: true,
-        product,
-        variants,
+        data: {
+          ...product,
+          variants
+        }
       },
       { status: 200 }
     );

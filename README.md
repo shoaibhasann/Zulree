@@ -198,3 +198,35 @@ app/
 │
 └── styles/
     └── admin.css   # optional
+
+
+0% Scroll:
+“ZULREE.”
+Quiet Luxury.
+(Centered title, ring box closed)
+
+30% Scroll:
+“Crafted with Precision.” (Left aligned)
+→ Ring box slowly starts opening.
+
+60% Scroll:
+“Timeless Design.” (Right aligned)
+→ Ring revealed, subtle light, details visible.
+
+90% Scroll:
+“Made for Moments.” (Centered CTA)
+→ Ring settles, box fully open, CTA fades in.
+
+
+Background:        #E7DECB
+Primary Text:      #1A1A1A
+Secondary Text:    #5F5A52
+Muted Text:        #8B857A
+
+Primary Button:    #0F0F0F
+Button Hover:      #1A1A1A
+
+Accent Pink:       #C97C8B
+Soft Pink:         #F2C6CF
+Muted Rose:        #B96A7A
+Deep Rose:         #9E4F5F

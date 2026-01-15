@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/dbConnect";
 import { ProductModel } from "@/models/product.model";
 import { escapeRegex } from "@/helpers/escregex";
-import { productQuerySchema } from "@/schemas/productquerySchema";
+import { productQuerySchema } from "@/schemas/productQuerySchema";
 
 export async function GET(request) {
   await dbConnect();
@@ -20,122 +20,139 @@ export async function GET(request) {
       );
     }
 
-    const { q, category, priceMin, priceMax, sort, page, limit } = parsed.data;
+    const {
+      q,
+      category,
+      color,
+      instock,
+      priceMin,
+      priceMax,
+      sort,
+      page,
+      limit,
+    } = parsed.data;
 
     const pipeline = [
       {
         $match: {
           isActive: true,
-          hasStock: true,
-        },
-      },
-
-      // 🔥 Compute finalPrice dynamically
-      {
-        $addFields: {
-          finalPrice: {
-            $round: [
-              {
-                $subtract: [
-                  "$price",
-                  {
-                    $multiply: [
-                      "$price",
-                      { $divide: ["$discountPercent", 100] },
-                    ],
-                  },
-                ],
-              },
-              0,
-            ],
-          },
         },
       },
     ];
 
-    // 🔍 Search
+    /* 🔍 SEARCH */
     if (q) {
-      const re = new RegExp(escapeRegex(q), "i");
+      const regex = new RegExp(escapeRegex(q), "i");
       pipeline.push({
         $match: {
-          $or: [{ title: re }, { description: re }],
+          $or: [
+            { title: regex },
+            { description: regex },
+            { "category.main": regex },
+          ],
         },
       });
     }
 
-    // 🏷 Category filter
+    /* 🏷 CATEGORY */
     if (category) {
       pipeline.push({
-        $match: { "category.main": category },
+        $match: {
+          $expr: {
+            $eq: [{ $toLower: "$category.main" }, category],
+          },
+        },
       });
     }
 
-    // 💰 Price filter
+    /* 🎨 COLOR (SAFE FOR OLD DATA) */
+    if (color) {
+      const regex = new RegExp(escapeRegex(color), "i");
+      pipeline.push({
+        $match: {
+          $or: [
+            { color: regex},
+            { title: regex },
+            { description: regex },
+          ],
+        },
+      });
+    }
+
+    /* 📦 IN STOCK */
+    if (instock === true) {
+      pipeline.push({
+        $match: {
+          availableStock: { $gt: 0 },
+        },
+      });
+    }
+
+    /* 💰 PRICE FILTER */
     if (priceMin !== undefined || priceMax !== undefined) {
-      const priceCond = {};
-      if (priceMin !== undefined) priceCond.$gte = priceMin;
-      if (priceMax !== undefined) priceCond.$lte = priceMax;
+      const priceQuery = {};
+      if (priceMin !== undefined) priceQuery.$gte = priceMin;
+      if (priceMax !== undefined) priceQuery.$lte = priceMax;
 
       pipeline.push({
-        $match: { finalPrice: priceCond },
+        $match: {
+          price: priceQuery,
+        },
       });
     }
 
-    // 🔃 Sorting
-    let sortStage = { createdAt: -1, _id: -1 };
-    if (sort === "price_asc") sortStage = { finalPrice: 1, _id: -1 };
-    else if (sort === "price_desc") sortStage = { finalPrice: -1, _id: -1 };
-    else if (sort === "best_selling") sortStage = { soldCount: -1, _id: -1 };
+    /* 🔃 SORTING (SAFE FALLBACKS) */
+    switch (sort) {
+      case "price_asc":
+        pipeline.push({ $sort: { price: 1 } });
+        break;
 
-    const skip = (page - 1) * limit;
+      case "price_desc":
+        pipeline.push({ $sort: { price: -1 } });
+        break;
 
-    pipeline.push({
-      $facet: {
-        meta: [{ $count: "total" }],
-        data: [
-          { $sort: sortStage },
-          { $skip: skip },
-          { $limit: limit },
-          {
-            $project: {
-              title: 1,
-              slug: 1,
-              images: 1,
-              category: 1,
-              price: 1,
-              discountPercent: 1,
-              finalPrice: 1,
-              availableStock: 1,
-              hasStock: 1,
-              ratings: 1,
-              numberOfReviews: 1,
-              createdAt: 1,
-            },
+      case "newest":
+        pipeline.push({ $sort: { createdAt: -1 } });
+        break;
+
+      case "best_selling":
+        pipeline.push({
+          $sort: {
+            soldCount: -1,
+            createdAt: -1,
           },
-        ],
-      },
-    });
+        });
+        break;
+
+      case "trending":
+        pipeline.push({
+          $sort: {
+            lastSoldAt: -1,
+            soldCount: -1,
+            createdAt: -1,
+          },
+        });
+        break;
+
+      default:
+        // relevance / fallback
+        pipeline.push({ $sort: { createdAt: -1 } });
+    }
+
+    /* 📄 PAGINATION */
+    const skip = (page - 1) * limit;
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: limit });
 
     const result = await ProductModel.aggregate(pipeline);
 
-    const meta = result[0]?.meta?.[0] || { total: 0 };
-    const data = result[0]?.data || [];
-
-    return NextResponse.json(
-      {
-        success: true,
-        meta: {
-          total: meta.total,
-          page,
-          limit,
-          totalPages: Math.ceil(meta.total / limit),
-        },
-        data,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      success: true,
+      count: result.length,
+      data: result,
+    });
   } catch (err) {
-    console.error("GET /products ERROR:", err);
+    console.error("🔥 GET /products ERROR:", err);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }

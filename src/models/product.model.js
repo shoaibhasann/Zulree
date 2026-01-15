@@ -1,4 +1,6 @@
 import mongoose, { Schema } from "mongoose";
+import { TrustProductsEvaluationsContextImpl } from "twilio/lib/rest/trusthub/v1/trustProducts/trustProductsEvaluations";
+import { lowercase } from "zod";
 
 const productSchema = new Schema(
   {
@@ -24,6 +26,22 @@ const productSchema = new Schema(
       required: true,
       minlength: 10,
       maxlength: 2000,
+    },
+
+    color: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
+
+    soldCount: {
+      type: Number,
+      default: 0,
+    },
+
+    lastSoldAt: {
+      type: Date,
+      default: new Date(0),
     },
 
     category: {
@@ -94,6 +112,12 @@ const productSchema = new Schema(
     toObject: { virtuals: true },
   }
 );
+
+productSchema.index({ color: 1 });
+productSchema.index({ soldCount: -1 });
+productSchema.index({ lastSoldAt: -1 });
+productSchema.index({ createdAt: -1 });
+
 
 productSchema.pre("save", function () {
   if (this.sku && typeof this.sku === "string") {

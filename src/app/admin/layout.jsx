@@ -13,15 +13,15 @@ export default function AdminLayout({ children }) {
           <div className="p-2 border-b ">
             <SidebarTrigger
               className="
-    h-9 w-9
-    rounded-lg
-    bg-admin-card
-    border border-admin-border
-    text-white
-    hover:bg-[#151a34]
-    hover:text-white
-    transition-colors
-  "
+                        h-9 w-9
+                        rounded-lg
+                        bg-admin-card
+                        border border-admin-border
+                        text-white
+                        hover:bg-[#151a34]
+                        hover:text-white
+                        transition-colors
+                      "
             />
           </div>
 

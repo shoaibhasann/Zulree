@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -24,24 +24,32 @@ import api from "@/app/lib/api";
 import toast from "react-hot-toast";
 import { useProductActions } from "../hooks/useProductActions";
 
-
+const LIMIT = 10;
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
+  const router = useRouter();
   const { deleteProduct } = useProductActions();
 
   useEffect(() => {
     async function fetchProducts() {
       try {
+        setLoading(true);
 
-        const response = await api.get("/api/v1/admin/products");
+        const response = await api.get(
+          `/api/v1/admin/products?page=${page}&limit=${LIMIT}`
+        );
+
         const result = response.data;
+        console.log(result)
 
         if (result?.success) {
           setProducts(result.data || []);
+          setTotalPages(result.pagination?.totalPages || 1);
         }
       } catch (err) {
         toast.error(err?.response?.data?.message || "Failed to fetch products");
@@ -51,7 +59,7 @@ export default function ProductsPage() {
     }
 
     fetchProducts();
-  }, []);
+  }, [page]);
 
   if (loading) {
     return <ProductsSkeleton />;
@@ -71,10 +79,9 @@ export default function ProductsPage() {
     );
   }
 
-
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex items-center justify-between text-white">
         <h1 className="text-xl font-semibold">Products</h1>
 
@@ -84,51 +91,35 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-      {/* Table */}
-      {/* Table */}
+      {/* TABLE */}
       <div className="rounded-lg bg-admin-foreground border border-admin-border overflow-hidden">
         <Table>
-          {/* HEADER */}
-          <TableHeader
-            className="bg-admin-foreground
-            hover:bg-[#151a34]"
-          >
+          <TableHeader className="bg-admin-foreground">
             <TableRow className="bg-admin-bg hover:bg-[#151a34]">
-              <TableHead className="text-admin-muted font-medium">
-                Product
-              </TableHead>
-              <TableHead className="text-admin-muted font-medium">
-                Category
-              </TableHead>
-              <TableHead className="text-admin-muted font-medium">
-                Price
-              </TableHead>
-              <TableHead className="text-admin-muted font-medium">
-                Stock
-              </TableHead>
-              <TableHead className="text-admin-muted font-medium">
-                Status
-              </TableHead>
-              <TableHead className="text-right text-admin-muted font-medium">
+              <TableHead className="text-admin-muted">Product</TableHead>
+              <TableHead className="text-admin-muted">Category</TableHead>
+              <TableHead className="text-admin-muted">Price</TableHead>
+              <TableHead className="text-admin-muted">Stock</TableHead>
+              <TableHead className="text-admin-muted">Status</TableHead>
+              <TableHead className="text-right text-admin-muted">
                 Actions
               </TableHead>
             </TableRow>
           </TableHeader>
 
-          {/* BODY */}
           <TableBody>
             {products.map((p) => (
               <TableRow
                 key={p._id}
                 onClick={() => router.push(`/admin/products/${p._id}`)}
                 className="
-            bg-admin-foreground
-            hover:bg-[#151a34]
-            transition-colors
-            cursor-pointer
-            border-b border-admin-border
-            last:border-b-0
-          "
+                  bg-admin-foreground
+                  hover:bg-[#151a34]
+                  transition-colors
+                  cursor-pointer
+                  border-b border-admin-border
+                  last:border-b-0
+                "
               >
                 <TableCell className="font-medium text-white">
                   {p.title}
@@ -150,7 +141,10 @@ export default function ProductsPage() {
                   />
                 </TableCell>
 
-                <TableCell className="text-right">
+                <TableCell
+                  className="text-right"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -166,13 +160,15 @@ export default function ProductsPage() {
                       align="end"
                       className="bg-admin-card p-0 border border-slate-400"
                     >
-                      <DropdownMenuItem className="text-slate-50 hover:bg-admin-primary"
+                      <DropdownMenuItem
+                        className="text-slate-50 hover:bg-admin-primary"
                         onClick={() => router.push(`/admin/products/${p._id}`)}
                       >
                         View
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem className="text-slate-50 hover:bg-admin-primary"
+                      <DropdownMenuItem
+                        className="text-slate-50 hover:bg-admin-primary"
                         onClick={() =>
                           router.push(`/admin/products/${p._id}/edit`)
                         }
@@ -193,6 +189,31 @@ export default function ProductsPage() {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="flex items-center justify-between pt-4">
+        <p className="text-sm text-admin-muted">
+          Page {page} of {totalPages}
+        </p>
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+          >
+            Previous
+          </Button>
+
+          <Button
+            variant="outline"
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

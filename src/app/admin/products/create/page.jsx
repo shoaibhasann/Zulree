@@ -184,7 +184,7 @@ export default function CreateProductPage() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   {MAIN_CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
@@ -214,7 +214,7 @@ export default function CreateProductPage() {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   {subCategories.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
@@ -282,7 +282,7 @@ export default function CreateProductPage() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select material" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   {BASE_MATERIAL_OPTIONS.map((m) => (
                     <SelectItem key={m} value={m}>
                       {m}
