@@ -1,9 +1,6 @@
 import mongoose, { Schema } from "mongoose";
-import crypto from "crypto";
-import bcrypt from "bcrypt";
 import { normalizeIndianPhoneNumber } from "@/helpers/validatePhone";
 import jwt from "jsonwebtoken";
-import { Truculenta } from "next/font/google";
 
 const addressSchema = new Schema({
   label: { type: String, maxlength: 30 },
@@ -19,8 +16,21 @@ const addressSchema = new Schema({
     type: String,
     required: true,
     trim: true,
-    match: [/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian phone number"],
+
+    set: (value) => {
+      const normalized = normalizeIndianPhoneNumber(value);
+      return normalized || value;
+    },
+
+    validate: {
+      validator: function (v) {
+        // 🇮🇳 Indian E.164 format
+        return /^\+91[6-9]\d{9}$/.test(v);
+      },
+      message: "Enter a valid Indian phone number",
+    },
   },
+
   line1: {
     type: String,
     required: true,

@@ -15,9 +15,17 @@ const wishlistSchema = new mongoose.Schema(
       required: true,
     },
 
-    variant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Variant",
+    title: String,
+
+    slug: String,
+
+    sku: String,
+
+    image: {
+      type: {
+        public_id: String,
+        secure_url: String
+      }
     },
 
     addedAt: {
@@ -35,7 +43,9 @@ const wishlistSchema = new mongoose.Schema(
 );
 
 /* 🔥 One user cannot wishlist same variant twice */
-wishlistSchema.index({ user: 1, variant: 1 }, { unique: true });
+wishlistSchema.index({ user: 1, product: 1 }, { unique: true });
+
+
 
 export const WishlistModel =
   mongoose.models.Wishlist || mongoose.model("Wishlist", wishlistSchema);
