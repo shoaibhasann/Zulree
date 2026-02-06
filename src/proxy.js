@@ -6,17 +6,21 @@ const secretKey = new TextEncoder().encode(SECRET);
 
 
 export async function proxy(request) {
-
   const { pathname } = request.nextUrl;
-
   const cookieToken = request.cookies.get("refreshToken")?.value ?? null;
 
-
+  // 🔐 NO TOKEN CASE
   if (!cookieToken) {
-    console.warn("middleware -> no refreshToken cookie, redirecting");
-    return NextResponse.redirect(new URL("/login", request.url));
+    // Admin pages/APIs must be protected
+    if (pathname.startsWith("/admin")) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Login page must be accessible to guests
+    return NextResponse.next();
   }
 
+  // 🔓 TOKEN PRESENT
   let token = cookieToken.startsWith("Bearer ")
     ? cookieToken.split(" ")[1]
     : cookieToken;
@@ -26,41 +30,32 @@ export async function proxy(request) {
     const { payload } = await jwtVerify(token, secretKey);
     const role = payload.role;
 
-    // Login page acess
-    if(pathname === '/login'){
-      if(role === "Admin"){
+    // 🚫 Logged-in user should not see login page
+    if (pathname === "/login") {
+      if (role === "Admin") {
         return NextResponse.redirect(new URL("/admin", request.url));
-      } 
-
+      }
       return NextResponse.redirect(new URL("/", request.url));
     }
 
-    // Admin route protection
-    if(pathname.startsWith("/admin") && role !== "Admin"){
+    // 🔐 Admin-only protection
+    if (pathname.startsWith("/admin") && role !== "Admin") {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
+    // Optional: forward identity to admin APIs
     const headers = new Headers(request.headers);
-
     headers.set("x-user-id", String(payload.sub));
-
-    if (payload.role) headers.set("x-user-role", String(payload.role));
+    if (role) headers.set("x-user-role", role);
 
     return NextResponse.next({ request: { headers } });
   } catch (err) {
-    console.error(
-      "middleware -> jwtVerify failed:",
-      err?.name,
-      err?.message || err
-    );
+    // Invalid / expired token → treat as guest
     return NextResponse.redirect(new URL("/login", request.url));
   }
 }
 
+
 export const config = {
-  matcher: [
-    "/api/v1/auth/me",
-    "/api/v1/admin/:path*",
-    "/admin",
-  ],
+  matcher: ["/admin/:path*", "/api/v1/admin/:path*", "/login", "/api/v1/auth/me", "/api/v1/user/:path*"],
 };
