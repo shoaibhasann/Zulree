@@ -34,20 +34,32 @@
   --color-primary-hover: #34272C;
 
   /* 🌸 ACCENT – QUIET LUXURY */
-  --color-accent: #C48A9A;            /* muted royal rose */
-  --color-accent-soft: #F1DADF;       /* blush champagne */
-  --color-accent-muted: #B47988;      /* subtle highlight */
-  --color-accent-deep: #8F4C5D;       /* heirloom rose */
+/* ultra soft blush */
+  --color-accent-100: #ec4899;
+  --color-accent-200: #db2777;
+  --color-accent-300: #ff9fb4; /* pastel rose */
+  --color-accent-400: #ff6f8f; /* soft rose */
+  --color-accent-500: #ff3f6c; /* signature zulree pink */
+  --color-accent-600: #e6365e; /* deep rose */
+  --color-accent-700: #c92d52; /* luxury dark rose */
+
+  /* 🌺 Semantic aliases (recommended usage) */
+  --color-accent: var(--color-accent-500);
+  --color-accent-soft: var(--color-accent-400);
+  --color-accent-muted: var(--color-accent-600);
+  --color-accent-deep: var(--color-accent-700);
+   /* Dark pink for discount only */
+  --color-accent-discount: #e6365e;   /* accent-600 */
+  --color-accent-discount-deep: #c92d52; /* accent-700 */
+
+  /* Soft luxury yellow */
+  --color-gold-soft: #ffe4a3;
 
   /* 🧱 SURFACES */
   --color-card: #F1EBE7;              /* showroom surface */
   --color-border: #DED2D5;            /* hairline borders */
   --color-input: #EFE4E6;             /* soft luxury fields */
   --color-ring: #C48A9A;              /* focus states */
-
-  --color-gold-foil: #C4A484;     /* champagne antique gold */
---color-gold-soft: #EADCC7;     /* matte gold surface */
---color-gold-deep: #9E7C4F;     /* shadow gold */
 
 
   /* ======================
@@ -103,6 +115,16 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+
+  .custom-scrollbar{
+    scrollbar-color:  #ff3f6c transparent; /* thumb color and track color */
+    scrollbar-width: thin;
+  }
+}
+
+::selection {
+  background: #ff3f6c; /* pink-300 (example) */
+  color: #fff;         /* black text */
 }
 
 @keyframes slideUp {
@@ -149,6 +171,7 @@
   animation: shimmer 1.4s ease infinite;
 }
 
+
 @keyframes swipeLeft {
   0% { transform: translateX(0); opacity: 0.4; }
   50% { transform: translateX(-10px); opacity: 1; }
@@ -178,5 +201,68 @@
 
 .animate-fade {
   animation: fade 3.5s ease forwards;
+}
+
+
+/* ✨ ZULREE DISCOUNT SHIMMER */
+@keyframes zulree-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.zulree-discount {
+  position: relative;
+  overflow: hidden;
+
+  clip-path: polygon(
+    0 0,
+    90% 0,
+    100% 50%,
+    90% 100%,
+    0 100%
+  );
+}
+
+
+.zulree-discount::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-700),
+    var(--color-accent-500),
+    var(--color-accent-300),
+    var(--color-accent-500),
+    var(--color-accent-700)
+  );
+
+  background-size: 300% 300%;
+  animation: zulree-shimmer 6s ease-in-out infinite;
+
+  z-index: 0;
+}
+
+.zulree-discount > span {
+  position: relative;
+  z-index: 1;
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+  .zulree-discount-gradient {
+    animation: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .light-logo { display: none !important; }
+  .dark-logo { display: block !important; }
 }
 

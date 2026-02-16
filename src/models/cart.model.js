@@ -14,20 +14,24 @@ const cartItemSchema = new Schema(
     variantId: {
       type: Schema.Types.ObjectId,
       ref: "Variant",
-      required: true,
+      default: null,
     },
 
     sizeId: {
       type: Schema.Types.ObjectId,
-      required: true,
+      ref: "Size",
+      default: null
     },
 
     sku: { type: String, required: true }, 
 
     title: { type: String }, 
     image: { type: String },
+    discount: { type: Number,
+      default: 0
+    },
 
-    priceAt: { type: Number, required: true },
+    price: { type: Number, required: true },
 
     quantity: {
       type: Number,
@@ -46,20 +50,14 @@ const cartSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       index: true,
-      required: false,
-    },
-
-    guestId: {
-      type: String,
-      index: true,
-      required: false,
+      required: true,
     },
 
     items: [cartItemSchema],
 
     subtotal: { type: Number, default: 0 },
     shipping: { type: Number, default: 0 },
-    discount: { type: Number, default: 0 },
+    saving: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
 
     currency: { type: String, default: "INR" },
@@ -86,7 +84,7 @@ cartSchema.methods.recalculate = function () {
   this.subtotal = Math.round(subtotal);
   this.total = Math.max(
     0,
-    this.subtotal + (this.shipping || 0) - (this.discount || 0)
+    this.subtotal + (this.shipping || 70) - (this.discount || 0)
   );
 
   return this;
@@ -95,12 +93,15 @@ cartSchema.methods.recalculate = function () {
 
 cartSchema.methods.addOrUpdateItem = function (item) {
   const qty = Math.max(1, Number(item.quantity || 1));
+  const productId = String(item.productId);
+  const variantId = item.variantId ? String(item.variantId) : null;
+  const sizeId = item.sizeId ? String(item.sizeId) : null;
 
   const existing = this.items.find(
     (i) =>
-      String(i.productId) === String(item.productId) &&
-      String(i.variantId) === String(item.variantId) &&
-      String(i.sizeId) === String(item.sizeId)
+      String(i.productId) === productId &&
+      (i.variantId ? String(i.variantId) : null) === variantId &&
+      (i.sizeId ? String(i.sizeId) : null)=== sizeId
   );
 
   if (existing) {

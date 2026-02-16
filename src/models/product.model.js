@@ -125,14 +125,60 @@ productSchema.pre("save", function () {
   }
 });
 
+productSchema.methods.getStock = function (variantId, sizeId){
+  if(!this.isActive){
+    return { available: false, stock: 0, reason: "Product inactive"}
+  }
+
+  if(!this.hasVariants){
+    const stock = this.stock || 0;
+    return {
+      available: stock > 0,
+      stock,
+      reason: stock > 0 ? null : "Out Of Stock"
+    }
+  }
+
+  const variant = this.variants.find((v) => String(v._id) === String(variantId));
+
+  if(!variant || !variant.isActive){
+    return {
+      available: false,
+      stock: 0,
+      reason: "Variant inactive"
+    }
+  }
+
+  const size = variant.sizes.find((s) => String(s._id) === String(sizeId));
+
+  if(!size || !size.isActive){
+    return {
+      available: false,
+      stock: 0,
+      reason: "Size inactive"
+    }
+  }
+
+  return {
+    available: size.stock > 0,
+    stock: size.stock,
+    reason: size.stock > 0 ? null : "Out_Of_Stock"
+  }
+}
+
 
 
 // ******** VIRTUALS ********
 productSchema.virtual("finalPrice").get(function () {
-  const p = this.price || 0;
-  const d = this.discountPercent || 0;
-  if (d <= 0) return p;
-  return Math.round((p - (p * d) / 100) * 100) / 100;
+  const basePrice = Number(this.price || 0);
+  const discount = Number(this.discountPercent || 0);
+
+  if(discount <= 0) return basePrice;
+
+  const discounted = basePrice - (basePrice * discount) / 100;
+
+  return Math.max(0, Math.round(discounted * 100) / 100);
+
 });
 
 productSchema.virtual("isVariantProduct").get(function () {

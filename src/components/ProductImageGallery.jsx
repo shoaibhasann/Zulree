@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import DiscountRibbon from "./DiscountRibbon";
 
 export default function ProductImageGallery({ discount , images = [], title }) {
   const touchStartX = useRef(0);
@@ -106,7 +105,7 @@ export default function ProductImageGallery({ discount , images = [], title }) {
             key={i}
             onClick={() => changeImage(i)}
             className={`
-              relative aspect-square min-w-[64px]
+              relative aspect-square min-w-16
               rounded-md overflow-hidden border
               transition-all duration-300
               ${
@@ -141,7 +140,6 @@ export default function ProductImageGallery({ discount , images = [], title }) {
           onMouseLeave={() => setZoom(false)}
           onMouseMove={handleMouseMove}
         >
-          <DiscountRibbon percent={discount} />
           <Image
             key={activeImage} // IMPORTANT for fade
             src={activeImage}

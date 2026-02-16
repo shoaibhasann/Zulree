@@ -1,27 +1,38 @@
-import { Resend } from "resend";
-import LoginOtpEmail from "../../emails/LoginOtpEmail.jsx";
+import nodemailer from "nodemailer";
+import { render } from "@react-email/render";
+import LoginOtpEmail from "../../emails/LoginOtpEmail";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendOtpEmail(email, verifyCode) {
-  const result = await resend.emails.send({
-    from: "oboarding@resend.dev",
-    to: email,
-    subject: "Verification Code",
-    react: LoginOtpEmail({ otp: verifyCode }),
-  });
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
 
-  if (result.error) {
+    // Render React Email template to HTML
+    const emailHtml = await render(LoginOtpEmail({ otp: verifyCode }));
+
+    await transporter.sendMail({
+      from: `"Zulree" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: "Your Zulree Verification Code",
+      html: emailHtml,
+    });
+
+    return {
+      success: true,
+      message: "OTP sent successfully",
+    };
+  } catch (error) {
+    console.error("OTP Email Error:", error);
     return {
       success: false,
-      message: "Error: while sending verification email",
-      error: result.error,
+      message: "Failed to send OTP",
+      error,
     };
   }
-
-  return {
-    success: true,
-    message: "otp sent successfully",
-    data: result.data,
-  };
 }

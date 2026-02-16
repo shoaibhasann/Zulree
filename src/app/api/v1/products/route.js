@@ -38,7 +38,36 @@ export async function GET(request) {
           isActive: true,
         },
       },
+
+      // 🔥 ADD FINAL PRICE CALCULATION
+      {
+        $addFields: {
+          finalPrice: {
+            $cond: [
+              { $gt: ["$discountPercent", 0] },
+              {
+                $round: [
+                  {
+                    $subtract: [
+                      "$price",
+                      {
+                        $multiply: [
+                          "$price",
+                          { $divide: ["$discountPercent", 100] },
+                        ],
+                      },
+                    ],
+                  },
+                  2,
+                ],
+              },
+              "$price",
+            ],
+          },
+        },
+      },
     ];
+
 
     /* 🔍 SEARCH */
     if (q) {
@@ -95,20 +124,18 @@ export async function GET(request) {
       if (priceMax !== undefined) priceQuery.$lte = priceMax;
 
       pipeline.push({
-        $match: {
-          price: priceQuery,
-        },
+        $match: { finalPrice: priceQuery },
       });
     }
 
     /* 🔃 SORTING (SAFE FALLBACKS) */
     switch (sort) {
       case "price_asc":
-        pipeline.push({ $sort: { price: 1 } });
+        pipeline.push({ $sort: { finalPrice: 1 } });
         break;
 
       case "price_desc":
-        pipeline.push({ $sort: { price: -1 } });
+        pipeline.push({ $sort: { finalPrice: -1 } });
         break;
 
       case "newest":

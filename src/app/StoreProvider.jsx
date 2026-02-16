@@ -1,14 +1,17 @@
 "use client";
-
+import { useRef } from "react";
 import { Provider } from "react-redux";
-
-import { useEffect, useState } from "react";
-import { checkAuth } from "./lib/features/auth/authThunks";
-import { makeStore } from "./lib/store";
+import { makeStore } from "./lib/store/store";
+import { checkAuth } from "./lib/store/features/auth/authSlice";
 
 
-export default function ReduxProvider({ children }) {
-  const [store] = useState(() => makeStore());
+export default function StoreProvider({ children }) {
+  const storeRef = useRef(undefined);
+  if (!storeRef.current) {
+    // Create the store instance the first time this renders
+    storeRef.current = makeStore();
+    storeRef.current.dispatch(checkAuth());
+  }
 
-  return <Provider store={store}>{children}</Provider>;
+  return <Provider store={storeRef.current}>{children}</Provider>;
 }

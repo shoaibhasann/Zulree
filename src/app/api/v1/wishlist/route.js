@@ -1,119 +1,135 @@
-import { calculateFinalPrice } from "@/helpers/calculateFinalPrice";
 import { getUserId } from "@/helpers/getUserId";
 import { dbConnect } from "@/lib/dbConnect";
 import { ProductModel } from "@/models/product.model";
 import { VariantModel } from "@/models/variant.model";
 import { WishlistModel } from "@/models/wishlist.model";
-
+import { wishlistItemSchema } from "@/schemas/mergeWishlistSchema";
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
+  await dbConnect();
+
   try {
-    await dbConnect();
+    const userId = await getUserId(request);
 
-    const user = await getUserId(request);
-    if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    const { productId, variantId, notifyOnRestock = false } = await req.json();
-
-    if (!productId) {
+    if (!userId) {
       return NextResponse.json(
-        { message: "Product ID is required" },
-        { status: 400 }
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
       );
     }
 
-    // 🔍 Validate Product
-    const product = await ProductModel.findById(productId);
+    const raw = await request.json();
+    const parsed = wishlistItemSchema.safeParse(raw);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, errors: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { productId, variantId, sizeId, notifyOnRestock, addedAt } =
+      parsed.data;
+
+    let wishlist = await WishlistModel.findOne({ user: userId });
+
+    if (!wishlist) {
+      wishlist = await WishlistModel.create({
+        user: userId,
+        items: [],
+      });
+    }
+
+    const index = wishlist.items.findIndex(
+      (i) =>
+        String(i.productId) === String(productId) &&
+        String(i.variantId || "") === String(variantId || "") &&
+        String(i.sizeId || "") === String(sizeId || ""),
+    );
+
+    /* ---------------- REMOVE ---------------- */
+    if (index !== -1) {
+      wishlist.items.splice(index, 1);
+      await wishlist.save();
+
+      return NextResponse.json({
+        success: true,
+        action: "removed",
+        items: wishlist.items,
+      });
+    }
+
+    /* ---------------- ADD ---------------- */
+
+    const product = await ProductModel.findById(productId).lean();
     if (!product) {
       return NextResponse.json(
-        { message: "Product not found" },
-        { status: 404 }
+        { success: false, message: "Product not found" },
+        { status: 404 },
       );
     }
 
-    let priceAtAdd = calculateFinalPrice(product.price, product.discountpercent);
+    let price = product.price;
+    let discountPercent = product.discountPercent || 0;
+    let finalPrice =
+      discountPercent > 0
+        ? Math.ceil(price - (price * discountPercent) / 100)
+        : price;
 
-    // 🔍 Variant handling
-    if (variantId) {
-      const variant = await VariantModel.findById(variantId);
+    let sku = product.sku;
+    let title = product.title;
+    let slug = product.slug;
+    let image = product.images?.[0] || null;
+
+    if (product.hasVariants && variantId) {
+      const variant = await VariantModel.findById(variantId).lean();
       if (!variant) {
         return NextResponse.json(
-          { message: "Variant not found" },
-          { status: 404 }
+          { success: false, message: "Variant not found" },
+          { status: 404 },
         );
       }
+
+      const size = variant.sizes.find((s) => String(s._id) === String(sizeId));
+
+      if (!size) {
+        return NextResponse.json(
+          { success: false, message: "Size not found" },
+          { status: 404 },
+        );
+      }
+
+      sku = size.sku || sku;
     }
 
-    const wishlistItem = await WishlistModel.create({
-      user: user.id,
-      product: productId,
-      variant: variantId || null,
-      priceAtAdd,
-      notifyOnRestock,
+    wishlist.items.push({
+      productId,
+      variantId: variantId || null,
+      sizeId: sizeId || null,
+      title,
+      slug,
+      sku,
+      image,
+      price,
+      discount: discountPercent,
+      finalPrice,
+      notifyOnRestock: notifyOnRestock || false,
+      addedAt: addedAt ? new Date(addedAt) : new Date(),
     });
 
-    return NextResponse.json(
-      { message: "Added to wishlist", wishlistItem },
-      { status: 201 }
-    );
-  } catch (error) {
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { message: "Already in wishlist" },
-        { status: 409 }
-      );
-    }
+    await wishlist.save();
 
-    console.error(error);
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(req) {
-  try {
-    await dbConnect();
-
-    const user = await getUserId(req);
-    if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    const { productId, variantId } = await req.json();
-
-    if (!productId) {
-      return NextResponse.json(
-        { message: "Product ID is required" },
-        { status: 400 }
-      );
-    }
-
-    const deleted = await WishlistModel.findOneAndDelete({
-      user: user.id,
-      product: productId,
-      ...(variantId ? { variant: variantId } : { variant: null }),
+    return NextResponse.json({
+      success: true,
+      action: "added",
+      items: wishlist.items,
     });
-
-    if (!deleted) {
-      return NextResponse.json(
-        { message: "Item not found in wishlist" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { message: "Removed from wishlist" },
-      { status: 200 }
-    );
   } catch (error) {
-    console.error(error);
+    console.error("Wishlist toggle error:", error);
     return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
+      { success: false, message: "Internal Server Error" },
+      { status: 500 },
     );
   }
 }

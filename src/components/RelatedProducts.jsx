@@ -56,7 +56,7 @@ export default function RelatedProducts({ slugProp }) {
     flex gap-4
     overflow-x-auto
     touch-pan-x
-    snap-x snap-mandatory
+    snap-x snap-proximity
     pb-2
     md:grid md:grid-cols-4 md:gap-6 md:overflow-visible
   "

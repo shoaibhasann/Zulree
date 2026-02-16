@@ -7,7 +7,11 @@ const secretKey = new TextEncoder().encode(SECRET);
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
+
   const cookieToken = request.cookies.get("refreshToken")?.value ?? null;
+
+  console.log("Middleware running for:", pathname);
+
 
   // 🔐 NO TOKEN CASE
   if (!cookieToken) {
@@ -57,5 +61,5 @@ export async function proxy(request) {
 
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/v1/admin/:path*", "/login", "/api/v1/auth/me", "/api/v1/user/:path*"],
+  matcher: ["/admin/:path*", "/api/v1/admin/:path*", "/login", "/api/v1/auth/me", "/api/v1/user/:path*", "/api/v1/cart/:path*", "/api/v1/wishlist/:path*"],
 };

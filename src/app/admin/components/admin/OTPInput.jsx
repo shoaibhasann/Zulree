@@ -47,32 +47,34 @@ export default function OTPInput({ length = 6, value = "", onChange }) {
   };
 
   return (
-    <div className="flex justify-around p-0 max-w-sm">
-      {Array.from({ length }).map((_, i) => (
-        <input
-          key={i}
-          ref={(el) => (inputsRef.current[i] = el)}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[i] || ""}
-          onChange={(e) => handleChange(e, i)}
-          onKeyDown={(e) => handleKeyDown(e, i)}
-          onPaste={handlePaste}
-          className="
-            w-11 h-11
-            text-center text-lg font-medium
-            bg-[#0b0b0d]
-            border border-white/20
-            rounded-md
-            text-white
-            caret-white
-            focus:outline-none
-            focus:border-indigo-500
-            focus:ring-1 focus:ring-indigo-500
-          "
-        />
-      ))}
-    </div>
-  );
-}
+  <div className="flex justify-between max-w-sm mx-auto gap-2">
+    {Array.from({ length }).map((_, i) => (
+      <input
+        key={i}
+        ref={(el) => (inputsRef.current[i] = el)}
+        type="text"
+        inputMode="numeric"
+        maxLength={1}
+        value={value[i] || ""}
+        onChange={(e) => handleChange(e, i)}
+        onKeyDown={(e) => handleKeyDown(e, i)}
+        onPaste={handlePaste}
+        className="
+          w-12 h-12
+          text-center text-lg font-semibold
+          bg-white
+          border border-gray-300
+          rounded-xl
+          text-gray-800
+          caret-[#ff3f6c]
+          shadow-sm
+          transition-all duration-200
+
+          focus:outline-none
+          focus:border-[#ff3f6c]
+          focus:ring-2 focus:ring-[#ff3f6c]/30
+        "
+      />
+    ))}
+  </div>
+)};

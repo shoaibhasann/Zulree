@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
 
@@ -9,9 +9,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/app/lib/api";
 import OTPInput from "@/app/admin/components/admin/OTPInput";
+import { useAppDispatch } from "@/app/lib/store/hooks";
+import { syncCart } from "@/app/lib/store/features/cart/cartSlice";
+
+/* ---------------- HELPERS ---------------- */
+const isValidIdentifier = (value) => {
+  const phoneRegex = /^[6-9]\d{9}$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return phoneRegex.test(value) || emailRegex.test(value);
+};
+
+const getIdentifierType = (value) => {
+  if (/^[6-9]\d{9}$/.test(value)) return "phone";
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "email";
+  return null;
+};
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || "/";
+
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,27 +42,26 @@ export default function LoginPage() {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm({
-    defaultValues: {
-      identifier: "",
-    },
-  });
+  } = useForm({ defaultValues: { identifier: "" } });
 
   const identifier = watch("identifier");
 
-  
+  /* OTP TIMER */
   useEffect(() => {
     if (timer <= 0) return;
-
-    const interval = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
+    const i = setInterval(() => setTimer((t) => t - 1), 1000);
+    return () => clearInterval(i);
   }, [timer]);
 
-  
+  /* SEND OTP */
   const onSendOtp = async ({ identifier }) => {
+    const type = getIdentifierType(identifier);
+
+    if (!type) {
+      setError("Enter a valid email or mobile number");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -64,13 +81,12 @@ export default function LoginPage() {
     }
   };
 
-  
+  /* VERIFY OTP */
   const verifyOtp = async () => {
     if (otp.length !== 6 || loading) return;
 
     try {
       setLoading(true);
-      setError(null);
 
       const res = await api.post("/api/v1/auth/verify-otp", {
         identifier,
@@ -78,26 +94,22 @@ export default function LoginPage() {
       });
 
       if (res.data.success) {
-        router.replace("/admin");
+        router.replace(redirectTo);
       } else {
         setError(res.data.message);
         setOtp("");
       }
     } catch {
-      setError(res.data.message);
+      setError("Invalid OTP");
       setOtp("");
     } finally {
       setLoading(false);
     }
   };
 
-  
   useEffect(() => {
-    if (otp.length === 6) {
-      verifyOtp();
-    }
+    if (otp.length === 6) verifyOtp();
   }, [otp]);
-
 
   const onResendOtp = async () => {
     if (timer > 0) return;
@@ -105,111 +117,145 @@ export default function LoginPage() {
     setTimer(30);
   };
 
+  const identifierType = getIdentifierType(identifier);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0b0b0d]">
-      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#171717] p-6 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
-        <h1 className="mb-1 text-center text-2xl font-semibold text-white">
-          Login into your account
-        </h1>
+    <div className="min-h-screen bg-linear-to-br from-pink-50 via-white to-pink-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-5xl md:min-h-[60vh] grid grid-cols-1 md:grid-cols-2 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden">
+        {/* IMAGE SIDE */}
+        <div className="relative hidden md:flex items-center justify-center">
+          <Image
+            src="/banner5.jpg"
+            alt="Luxury Jewellery Model"
+            fill
+            priority
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/40 to-black/20" />
+          <div className="relative z-10 text-left px-10">
+            <h2 className="text-3xl font-light text-white mb-3 leading-snug">
+              Crafted for
+              <br />
+              Modern Elegance
+            </h2>
+            <p className="text-sm text-white/80 max-w-sm">
+              Sign in to discover curated jewellery designed to elevate everyday
+              beauty.
+            </p>
+          </div>
+        </div>
 
-        <p className="mt-4 mb-6 text-center text-sm text-[#99a09d]">
-          {!otpSent
-            ? "Get access to your Orders, Wishlist and Recommendations"
-            : `Enter the OTP sent to +91XXXXXX${identifier.slice(6, 10)}`}
-        </p>
+        {/* FORM SIDE */}
+        <div className="p-8 sm:p-10 flex flex-col justify-center">
+          <h1 className="text-2xl font-medium text-gray-900 text-center mb-2">
+            Welcome Back
+          </h1>
 
-        {/* ================= PHONE STEP ================= */}
-        {!otpSent && (
-          <form onSubmit={handleSubmit(onSendOtp)} className="space-y-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center gap-2 px-3 border-r border-white/10 bg-[#212121] rounded-l-md">
-                <Image
-                  src="/flag.svg"
-                  alt="India"
-                  width={20}
-                  height={20}
-                  className="w-5 h-5"
-                />
-                <span className="text-sm text-gray-300">+91</span>
-              </div>
+          <p className="text-center text-sm text-gray-500 mb-8">
+            {!otpSent
+              ? "Login using Email or Mobile Number"
+              : identifierType === "phone"
+                ? `Enter OTP sent to +91******${identifier.slice(-4)}`
+                : `Enter OTP sent to ${identifier}`}
+          </p>
 
+          {!otpSent && (
+            <form onSubmit={handleSubmit(onSendOtp)} className="space-y-5">
               <Input
-                type="tel"
-                inputMode="numeric"
-                maxLength={10}
-                placeholder="Enter mobile number"
+                type="text"
+                placeholder="Email or Mobile number"
                 {...register("identifier", {
-                  required: "Mobile number is required",
-                  pattern: {
-                    value: /^[6-9]\d{9}$/,
-                    message: "Enter valid 10-digit mobile number",
+                  required: "Email or mobile number is required",
+                  validate: (value) => {
+                    const phoneRegex = /^[6-9]\d{9}$/;
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                    return (
+                      phoneRegex.test(value) ||
+                      emailRegex.test(value) ||
+                      "Enter a valid email or mobile number"
+                    );
                   },
                 })}
-                onInput={(e) =>
-                  (e.target.value = e.target.value.replace(/\D/g, ""))
-                }
-                className="h-11 pl-22 bg-[#212121] border-0 text-white placeholder:text-gray-400 focus-visible:ring-1 focus-visible:ring-indigo-500"
+                className="h-12 rounded-xl bg-white border border-pink-200 text-gray-900 placeholder:text-gray-400 focus-visible:ring-1 focus-visible:ring-pink-400"
               />
-            </div>
 
-            {errors.identifier && (
-              <p className="text-xs text-red-500">
-                {errors.identifier.message}
-              </p>
-            )}
+              {errors.identifier && (
+                <p className="text-xs text-pink-600">
+                  {errors.identifier.message}
+                </p>
+              )}
 
-            <Button
-              type="submit"
-              className="h-11 p-0 w-full bg-indigo-600 hover:bg-indigo-700 border-0 text-white"
-              disabled={loading}
-            >
-              {loading ? "Sending OTP..." : "Request OTP"}
-            </Button>
-          </form>
-        )}
+              {error && (
+                <p className="text-xs text-pink-600 text-center">{error}</p>
+              )}
 
-        {/* ================= OTP STEP ================= */}
-        {otpSent && (
-          <div className="space-y-4 p-0">
-            <OTPInput value={otp} onChange={setOtp} />
+              <Button
+                type="submit"
+                disabled={loading}
+                className="h-12 w-full rounded-xl border-0 bg-pink-500 hover:bg-pink-600 text-white font-medium tracking-wide"
+              >
+                {loading ? "Sending OTP..." : "Request OTP"}
+              </Button>
 
-            {error && (
-              <p className="text-xs text-red-500 text-center">{error}</p>
-            )}
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => router.replace(redirectTo)}
+                  className="text-sm text-gray-500 hover:text-pink-500 underline"
+                >
+                  Continue shopping without login →
+                </button>
+              </div>
+            </form>
+          )}
 
-            <div className="flex justify-center">
+          {otpSent && (
+            <div className="max-w-sm mx-auto w-full space-y-6">
+              <OTPInput length={6} value={otp} onChange={setOtp} />
+
+              {error && (
+                <p className="text-xs text-pink-600 text-center">{error}</p>
+              )}
+
               <Button
                 disabled
-                className="h-11 w-[97%] text-center bg-indigo-600 text-white opacity-80"
+                className="w-full
+      bg-accent
+      text-white
+      py-3
+      rounded-xl
+      font-semibold
+      transition-all duration-200
+      hover:opacity-90
+      shadow-md"
               >
                 {loading ? "Verifying..." : "Verify"}
               </Button>
-            </div>
 
-            <div className="flex justify-between text-xs text-gray-500">
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="hover:text-white cursor-pointer transition"
-              >
-                Change number
-              </button>
+              <div className="flex justify-between text-xs text-gray-500">
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="hover:text-accent"
+                >
+                  Change
+                </button>
 
-              <button
-                type="button"
-                onClick={onResendOtp}
-                disabled={timer > 0}
-                className={`transition ${
-                  timer > 0
-                    ? "text-gray-500 cursor-not-allowed"
-                    : "hover:text-white cursor-pointer hover:underline"
-                }`}
-              >
-                {timer > 0 ? `Resend in ${timer}s` : "Resend OTP"}
-              </button>
+                <button
+                  type="button"
+                  onClick={onResendOtp}
+                  disabled={timer > 0}
+                  className={
+                    timer > 0 ? "text-gray-400" : "hover:text-accent"
+                  }
+                >
+                  {timer > 0 ? `Resend in ${timer}s` : "Resend OTP"}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

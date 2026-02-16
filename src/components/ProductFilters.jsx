@@ -1,28 +1,10 @@
 "use client";
 
+import { STORAGE_KEYS } from "@/app/constants/storageKey";
+import { getStorage, removeStorage, setStorage } from "@/app/lib/localStorage";
 import { SlidersHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-
-const STORAGE_KEY = "zulree_product_filters";
-
-/* ------------------ STORAGE HELPERS ------------------ */
-function saveFiltersToStorage(params) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(params));
-}
-
-function getFiltersFromStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function clearFiltersFromStorage() {
-  localStorage.removeItem(STORAGE_KEY);
-}
+import { useEffect, useState } from "react";
 
 /* ------------------ OPTIONS ------------------ */
 const PRICE_OPTIONS = [
@@ -52,6 +34,7 @@ export default function ProductFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  
   const category = searchParams.get("category") || "";
   const price = searchParams.get("price") || "";
   const inStock = searchParams.get("inStock") === "true";
@@ -73,26 +56,27 @@ export default function ProductFilters() {
     updateParam(key, current === value ? "" : value);
   }
 
-  /* ------------------ SAVE TO LOCALSTORAGE ------------------ */
-  useEffect(() => {
-    const paramsObj = Object.fromEntries(searchParams.entries());
-    console.log("Saving to localStorage params object", paramsObj);
-    if (Object.keys(paramsObj).length > 0) {
-      saveFiltersToStorage(paramsObj);
-    }
-  }, [searchParams]);
+/* SAVE */
+useEffect(() => {
+  const paramsObj = Object.fromEntries(searchParams.entries());
+  if (Object.keys(paramsObj).length > 0) {
+    setStorage(STORAGE_KEYS.FILTERS, paramsObj);
+  }
+}, [searchParams]);
 
-  /* ------------------ RESTORE ON FIRST LOAD ------------------ */
-  useEffect(() => {
-    if (searchParams.toString()) return; // URL already has filters
+/* RESTORE */
+useEffect(() => {
+  if (searchParams.toString()){
+    return;
+  }
 
-    const stored = getFiltersFromStorage();
-    if (!stored) return;
+  const stored = getStorage(STORAGE_KEYS.FILTERS);
+  if (!stored) return;
 
-    const params = new URLSearchParams(stored);
-    router.replace(`/products?${params.toString()}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const params = new URLSearchParams(stored);
+  router.replace(`/products?${params.toString()}`);
+}, []);
+
 
   return (
     <aside className="sticky top-0 space-y-8">
@@ -200,7 +184,7 @@ export default function ProductFilters() {
       {/* CLEAR */}
       <button
         onClick={() => {
-          clearFiltersFromStorage();
+          removeStorage("zulree_product_filters");
           router.push("/products");
         }}
         className="text-sm underline opacity-70 hover:opacity-100"

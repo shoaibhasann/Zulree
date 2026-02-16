@@ -1,9 +1,9 @@
+
+
+import AuthSyncWrapper from "@/components/AuthSyncWrapper";
 import "./globals.css";
-import ReduxProvider from "./StoreProvider";
+import StoreProvider from "./StoreProvider";
 import { Playfair_Display, Inter } from "next/font/google";
-
-
-
 
 
 
@@ -36,9 +36,9 @@ export default function RootLayout({ children }) {
           text-foreground
         `}
       >
-        <ReduxProvider>
-            {children}
-        </ReduxProvider>
+        <StoreProvider>
+          <AuthSyncWrapper>{children}</AuthSyncWrapper>
+        </StoreProvider>
       </body>
     </html>
   );

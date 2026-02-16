@@ -36,7 +36,7 @@ export default function ProductGrid({ category }) {
   if (error) return <p className="px-6 text-red-500">{error}</p>;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4 md:px-8">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 px-1 md:gap-4 md:px-8">
       {products && products.map((p) => (
           <ProductCard p={p} key={p._id} />
       ))}

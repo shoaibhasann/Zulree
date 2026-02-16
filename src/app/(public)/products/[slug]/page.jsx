@@ -95,11 +95,14 @@ export default function ProductDetailPage() {
               <span className="text-2xl font-medium">
                 ₹{product.finalPrice ?? product.price}
               </span>
-              {product.discountPercent > 0 && (
-                <span className="text-sm flex items-center gap-1 text-green-600">
-                  <TicketPercent className="w-4 h-4" />
-                  Save {product.discountPercent}%
-                </span>
+              {product?.discountPercent > 0 ? (
+                <div className="zulree-discount text-white text-[11px] px-2 md:px-3 py-1 font-bold">
+                  <span>SAVE {product.discountPercent}%</span>
+                </div>
+              ) : (
+                <div className="zulree-discount text-white text-[11px] px-3 py-1 font-bold opacity-0">
+                  <span>SAVE {product.discountPercent}%</span>
+                </div>
               )}
             </div>
             {/* QUANTITY */}
@@ -128,32 +131,32 @@ export default function ProductDetailPage() {
               <h3 className="text-sm font-semibold mb-3">Available Offers</h3>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
-                  <TicketPercent className="w-4 h-4 text-pink-600" />
+                  <TicketPercent className="w-4 h-4 text-accent" />
                   Free Shipping Above ₹599
                 </li>
                 <li className="flex items-center gap-2">
-                  <TicketPercent className="w-4 h-4 text-pink-600" />
+                  <TicketPercent className="w-4 h-4 text-accent" />
                   Free gift on shopping above ₹699
                 </li>
                 <li className="flex items-center gap-2">
-                  <TicketPercent className="w-4 h-4 text-pink-600" />
+                  <TicketPercent className="w-4 h-4 text-accent" />
                   Free organiser on shopping above ₹1199
                 </li>
                 <li className="flex items-center gap-2">
-                  <TicketPercent className="w-4 h-4 text-pink-600" />
+                  <TicketPercent className="w-4 h-4 text-accent" />
                   Get ₹100 off on shopping above ₹1499
                 </li>
               </ul>
             </div>
             {/* ACTION BUTTONS */}
             <div className="flex flex-col gap-3">
-              <Button className="w-full border-0 md:w-2/3 bg-pink-600 text-white rounded-full py-6 hover:bg-pink-700">
+              <Button variant="outline" className="w-full cursor-pointer border-0 md:border bg-accent text-white md:w-2/3  md:text-accent md:bg-white md:border-accent rounded-full py-6 md:hover:bg-accent md:hover:text-white">
                 Add to Cart
               </Button>
 
               <Button
                 variant="outline"
-                className="w-full cursor-pointer md:w-2/3 rounded-full py-6 border-black hover:bg-black hover:text-white"
+                className="w-full cursor-pointer md:w-2/3 rounded-full py-6 bg-black text-white md:text-black md:bg-white border-0 md:border md:border-black md:hover:bg-black md:hover:text-white"
               >
                 Buy Now
               </Button>
@@ -214,12 +217,12 @@ export default function ProductDetailPage() {
                       <li>Free shipping for orders above ₹599</li>
                     </ul>
 
-                    <button
-                      className="mt-2 text-sm text-pink-600 font-medium hover:underline"
+                    <div
+                      className="mt-2 text-sm text-accent font-medium hover:underline"
                       type="button"
                     >
                       View Shipping Policy
-                    </button>
+                    </div>
                   </div>
 
                   {/* REFUND & EXCHANGE */}
@@ -243,12 +246,12 @@ export default function ProductDetailPage() {
                       customer support team is always here to help.
                     </p>
 
-                    <button
-                      className="mt-2 text-sm text-pink-600 font-medium hover:underline"
+                    <div
+                      className="mt-2 text-sm text-accent font-medium hover:underline"
                       type="button"
                     >
                       View Return & Exchange Policy
-                    </button>
+                    </div>
                   </div>
                 </div>
               </FAQItem>

@@ -230,3 +230,14 @@ Accent Pink:       #C97C8B
 Soft Pink:         #F2C6CF
 Muted Rose:        #B96A7A
 Deep Rose:         #9E4F5F
+
+
+I help local businesses grow online through:
+
+• Business Website
+• Online Presence Setup
+• Customer Inquiry Systems
+• WhatsApp & Lead Integration
+• Website Maintenance & Support
+
+Let your business work online — even when you sleep.

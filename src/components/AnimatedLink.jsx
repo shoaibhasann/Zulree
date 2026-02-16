@@ -5,7 +5,7 @@ export default function AnimatedLink({
   href,
   label,
   className = "",
-  underlineClass = "bg-white",
+  underlineClass = "bg-accent",
 }) {
   return (
     <Link

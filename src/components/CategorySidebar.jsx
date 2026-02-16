@@ -15,7 +15,7 @@ const categories = [
   "Bridal Collection",
 ];
 
-export default function CategorySidebar({ open, onClose }) {
+export default function CategorySidebar({ handleSidebarClose, open, onClose }) {
   return (
     /* 🌫 OVERLAY */
     <div
@@ -28,7 +28,7 @@ export default function CategorySidebar({ open, onClose }) {
       <aside
         onClick={(e) => e.stopPropagation()}
         className={`
-    fixed z-60 bg-background border-border
+       fixed z-60 bg-background border-border
 
     /* ---------------- MOBILE (default) ---------------- */
     bottom-0 left-0 w-full h-[91vh]
@@ -61,8 +61,11 @@ export default function CategorySidebar({ open, onClose }) {
           {categories.map((cat) => (
             <Link
               key={cat}
-              href={`/shop/${cat.toLowerCase().replace(/\s+/g, "-")}`}
-              onClick={onClose}
+              href={`/products?category=${cat.toLowerCase().replace(/\s+/g, "-")}`}
+              onClick={() => {
+                onclose();
+                handleSidebarClose();
+              }}
               className="group relative w-fit block"
             >
               <span className="text-[16px] text-text-primary">{cat}</span>

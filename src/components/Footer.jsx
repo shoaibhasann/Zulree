@@ -7,7 +7,7 @@ import AnchorLink from "./AnimatedLink";
 
 export default function Footer() {
   return (
-    <footer className="relative mt-20 text-white overflow-hidden">
+    <footer className="relative text-white overflow-hidden">
       {/* BACKGROUND IMAGE */}
       <div className="absolute inset-0">
         <Image
@@ -25,15 +25,15 @@ export default function Footer() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-16 items-start">
           <div>
-              <Image
-                src="/zulree-footer.png"
-                alt="ZULREE"
-                width={200}
-                height={20}
-                className="block md:hidden w-[140px] md:w-[100px] object-contain"
-              />
+            <Image
+              src="/zulree-footer.png"
+              alt="ZULREE"
+              width={200}
+              height={20}
+              className="block md:hidden w-[140px] md:w-[100px] object-contain"
+            />
 
-            <p className="text-sm text-white/70 leading-relaxed mb-5">
+            <p className="text-sm text-white/80 leading-relaxed mb-5">
               Zulree is a modern jewellery brand celebrating minimal design,
               refined details, and everyday elegance for the new generation.
             </p>
@@ -41,19 +41,19 @@ export default function Footer() {
             <div className="flex gap-4">
               <Link
                 href="#"
-                className="text-white/70 hover:text-white transition"
+                className="text-white hover:text-accent transition"
               >
                 <Instagram className="h-5 w-5" />
               </Link>
               <Link
                 href="#"
-                className="text-white/70 hover:text-white transition"
+                className="text-white hover:text-accent transition"
               >
                 <Facebook className="h-5 w-5" />
               </Link>
               <Link
                 href="#"
-                className="text-white/70 hover:text-white transition"
+                className="text-white hover:text-accent transition"
               >
                 <Twitter className="h-5 w-5" />
               </Link>
@@ -63,17 +63,16 @@ export default function Footer() {
           {/* QUICK LINKS */}
           {/* QUICK LINKS */}
           <div>
-            <h3 className="text-sm font-medium tracking-wide mb-4">
+            <h3 className="text-base font-medium text-accent tracking-wide mb-4">
               Quick Links
             </h3>
 
-            <ul className="space-y-3 text-sm text-white/70">
+            <ul className="space-y-3 text-sm text-white">
               <li>
                 <AnchorLink
-                  href="/shop"
+                  href="/products"
                   label="Shop"
-                  underlineClass="bg-white"
-                  className="text-white/70 hover:text-white"
+                  className="text-white hover:text-accent"
                 />
               </li>
 
@@ -81,8 +80,7 @@ export default function Footer() {
                 <AnchorLink
                   href="/collections"
                   label="Collections"
-                  underlineClass="bg-white"
-                  className="text-white/70 hover:text-white"
+                  className="text-white hover:text-accent"
                 />
               </li>
 
@@ -90,8 +88,7 @@ export default function Footer() {
                 <AnchorLink
                   href="/about"
                   label="About Us"
-                  underlineClass="bg-white"
-                  className="text-white/70 hover:text-white"
+                  className="text-white hover:text-accent"
                 />
               </li>
 
@@ -99,8 +96,7 @@ export default function Footer() {
                 <AnchorLink
                   href="/contact"
                   label="Contact"
-                  underlineClass="bg-white"
-                  className="text-white/70 hover:text-white"
+                  className="text-white hover:text-accent"
                 />
               </li>
             </ul>
@@ -109,17 +105,24 @@ export default function Footer() {
           {/* STORE POLICY */}
           {/* STORE POLICY */}
           <div>
-            <h3 className="text-sm font-medium tracking-wide mb-4">
+            <h3 className="text-base font-medium text-accent tracking-wide mb-4">
               Store Policy
             </h3>
 
-            <ul className="space-y-3 text-sm text-white/70">
+            <ul className="space-y-3 text-sm text-white">
+              <li>
+                <AnchorLink
+                  href="/certification"
+                  label="Trust & Safety"
+                  className="text-white hover:text-accent"
+                />
+              </li>
+
               <li>
                 <AnchorLink
                   href="/shipping-policy"
                   label="Shipping Policy"
-                  underlineClass="bg-white/80"
-                  className="text-white/70 hover:text-white"
+                  className="text-white hover:text-accent"
                 />
               </li>
 
@@ -127,8 +130,7 @@ export default function Footer() {
                 <AnchorLink
                   href="/return-policy"
                   label="Return & Exchange"
-                  underlineClass="bg-white/80"
-                  className="text-white/70 hover:text-white"
+                  className="text-white hover:text-accent"
                 />
               </li>
 
@@ -136,17 +138,15 @@ export default function Footer() {
                 <AnchorLink
                   href="/privacy-policy"
                   label="Privacy Policy"
-                  underlineClass="bg-white/80"
-                  className="text-white/70 hover:text-white"
+                  className="text-white hover:text-accent"
                 />
               </li>
 
               <li>
                 <AnchorLink
-                  href="/terms"
+                  href="/terms-conditions"
                   label="Terms & Conditions"
-                  underlineClass="bg-white/80"
-                  className="text-white/70 hover:text-white"
+                  className="text-white hover:text-accent"
                 />
               </li>
             </ul>
@@ -157,7 +157,7 @@ export default function Footer() {
             <h3 className="text-sm font-medium tracking-wide mb-4">
               Join Our Newsletter
             </h3>
-            <p className="text-sm text-white/70 mb-4">
+            <p className="text-sm text-white/90 mb-4">
               New launches, exclusive edits, and private offers.
             </p>
 
@@ -205,8 +205,22 @@ export default function Footer() {
       <div className="relative z-10 border-t border-white/15" />
 
       {/* COPYRIGHT */}
-      <div className="relative z-10 text-center text-sm text-white/60 py-6">
-        © {new Date().getFullYear()} Zulree. All rights reserved.
+      <div className="relative z-10 text-center py-6 space-y-2">
+        <p className="text-sm text-gray-500">
+          © {new Date().getFullYear()} Zulree. All rights reserved.
+        </p>
+
+        <p className="text-xs text-gray-400">
+          Designed & Developed by{" "}
+          <a
+            href="https://iamshoaib.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#ff3f6c] font-medium hover:underline transition"
+          >
+            Shoaib
+          </a>
+        </p>
       </div>
     </footer>
   );

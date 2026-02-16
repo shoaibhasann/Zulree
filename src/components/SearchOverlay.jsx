@@ -61,20 +61,25 @@ export default function SearchOverlay({ isOpen, onClose }) {
     >
       <div className="flex flex-col h-full">
         {/* HEADER */}
-        <div className="flex items-center justify-between px-6 h-16 border-b shrink-0">
+        <div className="relative md:flex items-center justify-between md:px-16  h-16 border-b shrink-0">
           <h2 className="text-lg font-medium opacity-0 md:opacity-100">
             Search
           </h2>
 
-          <Image
-            src="/ZULREE.png"
-            alt="ZULREE"
-            width={130}
-            height={36}
-            priority
-          />
+          <div className="pt-2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <Image
+              src="/zulree-header.png"
+              alt="ZULREE"
+              width={200}
+              height={60}
+              className="w-[140px] h-auto object-contain"
+            />
+          </div>
 
-          <button onClick={onClose}>
+          <button
+            className="absolute right-5 -translate-x-1/2 -translate-y-1/2"
+            onClick={onClose}
+          >
             <X className="h-5 w-5" />
           </button>
         </div>

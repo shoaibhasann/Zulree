@@ -10,14 +10,14 @@ import Link from "next/link";
 gsap.registerPlugin(ScrollTrigger);
 
 const categories = [
-  { name: "Bangles", image: "/bangles.jpg" },
-  { name: "Bracelets", image: "/bracelets.jpg" },
-  { name: "Necklaces", image: "/necklace.jpg" },
-  { name: "Earrings", image: "/earrings.jpg" },
-  { name: "Jewellery Sets", image: "/js-cat.jpg" },
-  { name: "Anklets", image: "/anklets.jpg" },
-  { name: "Bridal Collection", image: "/bridal.jpg" },
-  { name: "Korean Jewellery", image: "/korean.jpg" },
+  { name: "Bangles", image: "/bangles.png" },
+  { name: "Bracelets", image: "/bracelets.png" },
+  { name: "Necklaces", image: "/necklace.png" },
+  { name: "Earrings", image: "/earrings.png" },
+  { name: "Jewellery Sets", image: "/js-cat.png" },
+  { name: "Anklets", image: "/anklets.png" },
+  { name: "Bridal Collection", image: "/bridal.png" },
+  { name: "Korean Jewellery", image: "/korean.png" },
 ];
 
 export default function CategorySection() {

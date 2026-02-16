@@ -6,16 +6,16 @@ import { NextResponse } from "next/server";
 
 export async function GET(request){
     await dbConnect();
-
     try {
         const userId = await getUserId(request);
-        console.log("id: ", userId);
+
+        console.log("Authenticated user ID:", userId);
 
         if(!isValidObjectId(userId)){
             return NextResponse.json({
                 success: false,
-                message: "Invalid user ID"
-            }, { status: 400 });
+                message: "Unauthorized"
+            }, { status: 401 });
         }
 
         const user = await UserModel.findById(userId);
@@ -26,10 +26,11 @@ export async function GET(request){
                 message: "User not found"
             }, { status: 404});
         }
-
+        
         return NextResponse.json({
             success: true,
             message: "User fetched successfully",
+            authenticated: true,
             user
         });
     } catch (err) {

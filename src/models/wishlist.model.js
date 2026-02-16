@@ -1,50 +1,94 @@
 import mongoose from "mongoose";
 
-const wishlistSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true,
-    },
 
-    product: {
+const wishlistItemSchema = new mongoose.Schema(
+  {
+    productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: true,
     },
 
-    title: String,
+    variantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Variant",
+      default: null,
+    },
 
-    slug: String,
+    sizeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Size",
+      default: null,
+    },
 
-    sku: String,
+    title: {
+      type: String,
+      required: true,
+    },
+
+    slug: {
+      type: String,
+      required: true,
+    },
+
+    sku: {
+      type: String,
+      required: true,
+    },
 
     image: {
-      type: {
-        public_id: String,
-        secure_url: String
-      }
+      public_id: { type: String, required: true },
+      secure_url: { type: String, required: true },
+    },
+
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    discountPercent: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    finalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    notifyOnRestock: {
+      type: Boolean,
+      default: false,
     },
 
     addedAt: {
       type: Date,
       default: Date.now,
     },
-
-    priceAtAdd: Number,
-    notifyOnRestock: {
-      type: Boolean,
-      default: false,
-    },
   },
-  { timestamps: true }
+  { _id: true },
 );
 
-/* 🔥 One user cannot wishlist same variant twice */
-wishlistSchema.index({ user: 1, product: 1 }, { unique: true });
 
+const wishlistSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
+
+    items: {
+      type: [wishlistItemSchema],
+      default: [],
+    },
+  },
+  { timestamps: true },
+);
 
 
 export const WishlistModel =
